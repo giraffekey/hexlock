@@ -1,6 +1,10 @@
 #include "glyph.h"
 
-void spawn_glyph(SignU8 sign, Glyph glyphs[], const Grid grid, const Player *player) {
+static uint8_t glyph_spawn_rate(uint8_t wave) {
+    return GLYPH_SPAWN_RATE - wave * 3 / 4;
+}
+
+static void spawn_glyph(SignU8 sign, Glyph glyphs[], uint8_t wave, const Grid grid, const Player *player) {
     bool is_used[18] = {0};
 
     for (uint8_t y = 0; y < N_ROWS; ++y) {
@@ -58,7 +62,7 @@ void spawn_glyph(SignU8 sign, Glyph glyphs[], const Grid grid, const Player *pla
             glyph->pos = pos;
             glyph->t = 0.0f;
             glyph->sign = sign;
-            glyph->lifetime = GLYPH_SPAWN_RATE * MAX_GLYPHS;
+            glyph->lifetime = glyph_spawn_rate(wave) * MAX_GLYPHS;
             break;
         }
     }
@@ -74,12 +78,12 @@ void update_glyphs(Glyph glyphs[]) {
     }
 }
 
-void update_glyph_spawner(GlyphSpawner *spawner, Glyph glyphs[], const Grid grid, const Player *player) {
+void update_glyph_spawner(GlyphSpawner *spawner, Glyph glyphs[], uint8_t wave, const Grid grid, const Player *player) {
     spawner->cooldown--;
     if (spawner->cooldown == 0) {
         SignU8 sign = spawner->chunk[spawner->index++];
-        spawn_glyph(sign, glyphs, grid, player);
-        spawner->cooldown = GLYPH_SPAWN_RATE;
+        spawn_glyph(sign, glyphs, wave, grid, player);
+        spawner->cooldown = glyph_spawn_rate(wave);
 
         if (spawner->index == 6) {
             generate_glyph_chunk(spawner);

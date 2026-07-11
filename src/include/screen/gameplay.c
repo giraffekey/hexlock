@@ -140,7 +140,7 @@ static void update_tick(GameplayState *s, Screen *next_screen) {
     update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets);
     update_enemies(s->enemies, s->grid, &s->player, s->bullets);
     update_bullets(s->bullets, s->grid, &s->player, s->enemies);
-    update_glyph_spawner(&s->glyph_spawner, s->glyphs, s->grid, &s->player);
+    update_glyph_spawner(&s->glyph_spawner, s->glyphs, s->wave, s->grid, &s->player);
     update_target_enemy(&s->target_enemy, &s->player, s->enemies);
 
     if (s->player.hp == 0) {
