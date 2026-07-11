@@ -8,9 +8,11 @@
 
 void check_player_glyph_collision(Player *player, Glyph glyphs[]);
 
-void check_player_enemy_collision(Player *player, Enemy enemies[]);
+void on_player_enemy_collision(Player *player, Enemy *enemy, Bullet bullets[]);
 
-void check_enemy_player_collision(Enemy *enemy, Player *player);
+void check_player_enemy_collision(Player *player, Enemy enemies[], Bullet bullets[]);
+
+void check_enemy_player_collision(Enemy *enemy, Player *player, Bullet bullets[]);
 
 void check_bullet_player_collision(Bullet *bullet, Player *player, Bullet bullets[]);
 

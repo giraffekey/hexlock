@@ -36,8 +36,9 @@ static void force_return(Enemy *enemy) {
     }
 }
 
-static void on_player_enemy_collision(Player *player, Enemy *enemy) {
+void on_player_enemy_collision(Player *player, Enemy *enemy, Bullet bullets[]) {
     switch (enemy->type) {
+    case WISP:
     case SCARAB:
         damage_player(player, 2);
         break;
@@ -48,34 +49,30 @@ static void on_player_enemy_collision(Player *player, Enemy *enemy) {
         }
         break;
     }
-}
 
-void check_player_enemy_collision(Player *player, Enemy enemies[]) {
-    for (size_t i = 0; i < MAX_ENEMIES; ++i) {
-        Enemy *enemy = &enemies[i];
-        if (enemy->exists && is_pos_eq(player->pos, enemy->pos)) on_player_enemy_collision(player, enemy);
+    if (player->statuses[STATUS_WILDFIRE_CLOAK]) {
+        spawn_bullet(bullets, player->pos, BULLET_WILDFIRE, true);
+    } else if (player->statuses[STATUS_FIRE_CLOAK]) {
+        spawn_bullet(bullets, player->pos, BULLET_FIREBALL, true);
     }
 }
 
-void check_enemy_player_collision(Enemy *enemy, Player *player) {
-    if (is_pos_eq(enemy->pos, player->pos)) on_player_enemy_collision(player, enemy);
+void check_player_enemy_collision(Player *player, Enemy enemies[], Bullet bullets[]) {
+    for (size_t i = 0; i < MAX_ENEMIES; ++i) {
+        Enemy *enemy = &enemies[i];
+        if (enemy->exists && is_pos_eq(player->pos, enemy->pos)) on_player_enemy_collision(player, enemy, bullets);
+    }
+}
+
+void check_enemy_player_collision(Enemy *enemy, Player *player, Bullet bullets[]) {
+    if (is_pos_eq(enemy->pos, player->pos)) on_player_enemy_collision(player, enemy, bullets);
 }
 
 static void on_bullet_player_collision(Bullet *bullet, Player *player, Bullet bullets[]) {
     uint8_t damage = get_bullet_damage(bullet->type);
 
-    bool immune = player->statuses[STATUS_PHANTOM];
-
-    if (player->statuses[STATUS_LEECH]) {
-        player->hp = min(player->hp + damage, MAX_PLAYER_HEALTH);
-        player->statuses[STATUS_LEECH]--;
-        immune = true;
-    }
-
     if (player->statuses[STATUS_REFLECT]) {
         reverse_bullet(bullet);
-        player->statuses[STATUS_REFLECT]--;
-        immune = true;
     } else {
         switch (bullet->type) {
         case BULLET_WHIRLPOOL:
@@ -89,9 +86,7 @@ static void on_bullet_player_collision(Bullet *bullet, Player *player, Bullet bu
         }
     }
 
-    if (!immune) {
-        damage_player(player, damage);
-    }
+    damage_player(player, damage);
 
     if (player->statuses[STATUS_WILDFIRE_CLOAK]) {
         spawn_bullet(bullets, player->pos, BULLET_WILDFIRE, true);

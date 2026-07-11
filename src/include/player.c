@@ -101,7 +101,20 @@ void use_hex(Player *player) {
 }
 
 void damage_player(Player *player, uint8_t damage) {
-    if (!player->statuses[STATUS_PHANTOM]) {
+    bool immune = player->statuses[STATUS_PHANTOM];
+
+    if (player->statuses[STATUS_LEECH]) {
+        player->hp = min(player->hp + damage, MAX_PLAYER_HEALTH);
+        player->statuses[STATUS_LEECH]--;
+        immune = true;
+    }
+
+    if (player->statuses[STATUS_REFLECT]) {
+        player->statuses[STATUS_REFLECT]--;
+        immune = true;
+    }
+
+    if (!immune) {
         if (damage >= player->hp) player->hp = 0;
         else player->hp -= damage;
     }

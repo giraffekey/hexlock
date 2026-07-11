@@ -125,6 +125,27 @@ void handle_input(Player *player, const Grid grid) {
     }
 }
 
+static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet bullets[]) {
+    switch (player->action) {
+    case ACTION_LEFT:
+        player->pos.x--;
+        break;
+    case ACTION_RIGHT:
+        player->pos.x++;
+        break;
+    case ACTION_UP:
+        player->pos.y--;
+        break;
+    case ACTION_DOWN:
+        player->pos.y++;
+        break;
+    }
+    
+    check_player_glyph_collision(player, glyphs);
+    check_player_enemy_collision(player, enemies, bullets);
+    check_player_bullet_collision(player, bullets);
+}
+
 static void cast_aries(const Player *player, Bullet bullets[]) {
     spawn_bullet(bullets, player->pos, BULLET_FIRE_WAVE, true);
 }
@@ -360,28 +381,10 @@ void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], B
         case ACTION_WAIT:
             break;
         case ACTION_LEFT:
-            player->pos.x--;
-            check_player_glyph_collision(player, glyphs);
-            check_player_enemy_collision(player, enemies);
-            check_player_bullet_collision(player, bullets);
-            break;
         case ACTION_RIGHT:
-            player->pos.x++;
-            check_player_glyph_collision(player, glyphs);
-            check_player_enemy_collision(player, enemies);
-            check_player_bullet_collision(player, bullets);
-            break;
         case ACTION_UP:
-            player->pos.y--;
-            check_player_glyph_collision(player, glyphs);
-            check_player_enemy_collision(player, enemies);
-            check_player_bullet_collision(player, bullets);
-            break;
         case ACTION_DOWN:
-            player->pos.y++;
-            check_player_glyph_collision(player, glyphs);
-            check_player_enemy_collision(player, enemies);
-            check_player_bullet_collision(player, bullets);
+            move_player(player, glyphs, enemies, bullets);
             break;
         case ACTION_MISSILE:
             spawn_bullet(bullets, player->pos, BULLET_MISSILE, true);

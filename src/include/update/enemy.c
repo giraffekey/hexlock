@@ -310,7 +310,7 @@ static void move_enemy(Enemy *enemy, EnemyActionU8 dir, Player *player, Bullet b
         break;
     }
 
-    check_enemy_player_collision(enemy, player);
+    check_enemy_player_collision(enemy, player, bullets);
     check_enemy_bullet_collision(enemy, bullets);
 }
 
@@ -360,19 +360,7 @@ static void return_enemy(Enemy *enemy) {
 
 static void melee_attack(Enemy *enemy, Player *player, Bullet bullets[]) {
     Position attack_pos = {enemy->pos.x - 1, enemy->pos.y};
-    if (is_pos_eq(player->pos, attack_pos)) {
-        switch (enemy->type) {
-        case WISP:
-            damage_player(player, 2);
-            break;
-        }
-    }
-    
-    if (player->statuses[STATUS_WILDFIRE_CLOAK]) {
-        spawn_bullet(bullets, player->pos, BULLET_WILDFIRE, true);
-    } else if (player->statuses[STATUS_FIRE_CLOAK]) {
-        spawn_bullet(bullets, player->pos, BULLET_FIREBALL, true);
-    }
+    if (is_pos_eq(player->pos, attack_pos)) on_player_enemy_collision(player, enemy, bullets);
 }
 
 static void teleport_enemy(Enemy *enemy, const Grid grid, const Enemy enemies[]) {
