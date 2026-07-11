@@ -140,10 +140,43 @@ static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet 
         player->pos.y++;
         break;
     }
-    
+
     check_player_glyph_collision(player, glyphs);
     check_player_enemy_collision(player, enemies, bullets);
     check_player_bullet_collision(player, bullets);
+}
+
+static void push_enemy(Position from, const Grid grid, Enemy enemies[]) {
+    bool is_used[18] = {0};
+
+    for (uint8_t y = 0; y < N_ROWS; ++y) {
+        for (uint8_t x = 0; x < N_COLS; ++x) {
+            Position pos = {x, y};
+            if (is_wall(grid, pos) || is_player_tile(grid, pos)) is_used[y * 6 + x] = true;
+        }
+    }
+
+    for (size_t i = 0; i < MAX_ENEMIES; ++i) {
+        const Enemy *enemy = &enemies[i];
+        if (enemy->exists) is_used[enemy->pos.y * 6 + enemy->pos.x] = true;
+    }
+
+    for (size_t i = 0; i < MAX_ENEMIES; ++i) {
+        Enemy *enemy = &enemies[i];
+        if (enemy->exists && is_pos_eq(enemy->pos, from)) {
+            if (enemy->pos.x == N_COLS - 1) {
+                enemy->exists = false;
+            } else {
+                Position behind = {enemy->pos.x + 1, enemy->pos.y};
+                if (is_used[behind.y * 6 + behind.x]) {
+                    enemy->exists = false;
+                } else {
+                    enemy->pos = behind;
+                    if (enemy->type == FLUFFY) enemy->data.fluffy.origin = behind;
+                }
+            }
+        }
+    }
 }
 
 static void cast_aries(const Player *player, Bullet bullets[]) {
@@ -154,14 +187,16 @@ static void cast_aries_omega(const Player *player, Bullet bullets[]) {
     spawn_bullet(bullets, player->pos, BULLET_FIRE_BLAST, true);
 }
 
-static void cast_taurus(const Player *player, Grid grid) {
+static void cast_taurus(const Player *player, Grid grid, Enemy enemies[]) {
     Position pos = {player->pos.x + 1, player->pos.y};
     set_tile(grid, pos, TILE_ROCK, 10);
+    push_enemy(pos, grid, enemies);
 }
 
-static void cast_taurus_omega(const Player *player, Grid grid) {
+static void cast_taurus_omega(const Player *player, Grid grid, Enemy enemies[]) {
     Position pos = {player->pos.x + 1, player->pos.y};
     set_tile(grid, pos, TILE_CRYSTAL, 15);
+    push_enemy(pos, grid, enemies);
 }
 
 static void cast_gemini(Player *player) {
@@ -195,17 +230,18 @@ static void cast_leo_omega(Player *player) {
     player->statuses[STATUS_WILDFIRE_CLOAK] += 100;
 }
 
-static void cast_virgo(const Player *player, Grid grid) {
+static void cast_virgo(const Player *player, Grid grid, Enemy enemies[]) {
     for (uint8_t x = player->pos.x; x < N_COLS; ++x) {
         Tile *tile = &grid[player->pos.y][x];
         if (!tile->is_player) {
             tile->is_player = true;
+            push_enemy((Position){x, player->pos.y}, grid, enemies);
             break;
         }
     }
 }
 
-static void cast_virgo_omega(const Player *player, Grid grid) {
+static void cast_virgo_omega(const Player *player, Grid grid, Enemy enemies[]) {
     for (uint8_t x = player->pos.x; x < N_COLS; ++x) {
         bool is_player_col = true;
         for (uint8_t y = 0; y < N_ROWS; ++y) {
@@ -219,6 +255,7 @@ static void cast_virgo_omega(const Player *player, Grid grid) {
         if (!is_player_col) {
             for (uint8_t y = 0; y < N_ROWS; ++y) {
                 grid[y][x].is_player = true;
+                push_enemy((Position){x, y}, grid, enemies);
             }
             break;
         }
@@ -290,7 +327,7 @@ static void cast_pisces_omega(Player *player) {
     player->hp = MAX_PLAYER_HEALTH;
 }
 
-static void cast_hex(Player *player, Grid grid, Bullet bullets[]) {
+static void cast_hex(Player *player, Grid grid, Enemy enemies[], Bullet bullets[]) {
     Hex hex = player->hexes[0];
     if (hex.valid) {
         switch (hex.sign + hex.omega * N_SIGNS) {
@@ -301,10 +338,10 @@ static void cast_hex(Player *player, Grid grid, Bullet bullets[]) {
             cast_aries_omega(player, bullets);
             break;
         case TAURUS:
-            cast_taurus(player, grid);
+            cast_taurus(player, grid, enemies);
             break;
         case TAURUS + N_SIGNS:
-            cast_taurus_omega(player, grid);
+            cast_taurus_omega(player, grid, enemies);
             break;
         case GEMINI:
             cast_gemini(player);
@@ -325,10 +362,10 @@ static void cast_hex(Player *player, Grid grid, Bullet bullets[]) {
             cast_leo_omega(player);
             break;
         case VIRGO:
-            cast_virgo(player, grid);
+            cast_virgo(player, grid, enemies);
             break;
         case VIRGO + N_SIGNS:
-            cast_virgo_omega(player, grid);
+            cast_virgo_omega(player, grid, enemies);
             break;
         case LIBRA:
             cast_libra(player, bullets);
@@ -390,7 +427,7 @@ void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], B
             spawn_bullet(bullets, player->pos, BULLET_MISSILE, true);
             break;
         case ACTION_HEX:
-            cast_hex(player, grid, bullets);
+            cast_hex(player, grid, enemies, bullets);
             break;
         }
 
