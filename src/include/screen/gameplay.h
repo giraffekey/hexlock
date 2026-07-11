@@ -1,0 +1,52 @@
+#ifndef SCREEN_GAMEPLAY_H
+#define SCREEN_GAMEPLAY_H
+
+#include <string.h>
+
+#include "raylib.h"
+#include "raymath.h"
+
+#include "types.h"
+#include "../wave.h"
+#include "../update/glyph.h"
+#include "../update/player.h"
+#include "../update/enemy.h"
+#include "../update/bullet.h"
+
+#define N_WAVES 20
+
+typedef struct {
+    Texture2D background;
+    Texture2D tiles_sprite;
+    Texture2D player_sprite;
+    Texture2D signs_sprite;
+    Texture2D enemies_sprite;
+    Texture2D bullets_sprite;
+    Texture2D status_sprite;
+} GameplayAssets;
+
+typedef struct {
+    float tick;
+    Grid grid;
+    Player player;
+    GlyphSpawner glyph_spawner;
+    Glyph glyphs[MAX_GLYPHS];
+    Enemy enemies[MAX_ENEMIES];
+    Bullet bullets[MAX_BULLETS];
+    uint8_t wave;
+    uint8_t countdown;
+    bool is_clear;
+    size_t target_enemy;
+} GameplayState;
+
+void load_gameplay_assets(GameplayAssets *a);
+
+void unload_gameplay_assets(GameplayAssets *a);
+
+void load_gameplay_screen(GameplayState *s);
+
+void update_gameplay(GameplayState *s, Screen *next_screen);
+
+void draw_gameplay(const GameplayState *s, const GameplayAssets *a);
+
+#endif

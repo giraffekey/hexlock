@@ -78,3 +78,12 @@ android.*
 *.js
 !src/minshell.html
 !src/shell.html
+
+# CMake
+cmake_install.cmake
+Makefile
+CMakeFiles
+CMakeCache.txt
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_deps/
