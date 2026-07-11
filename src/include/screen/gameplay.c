@@ -1,20 +1,41 @@
 #include "gameplay.h"
 
-static void spawn_wave(Enemy enemies[], uint8_t difficulty) {
+static void spawn_wave(Enemy enemies[], const Grid grid, uint8_t difficulty) {
     memcpy(enemies, WAVES[difficulty][rand() % N_WAVES_PER_DIFFICULTY], sizeof(Enemy) * MAX_ENEMIES);
 
+    bool is_used[18] = {0};
     for (size_t i = 0; i < MAX_ENEMIES; ++i) {
     	Enemy *enemy = &enemies[i];
     	if (enemy->exists) {
-	        uint8_t cooldown = current_step(enemy).cooldown;
-	        enemy->cooldown = cooldown;
-	        enemy->t_rate = (float)cooldown;
+            if (is_player_tile(grid, enemy->pos)) {
+                if (enemy->pos.x == N_COLS - 1) {
+                    enemy->exists = false;
+                } else {
+                    Position behind = {enemy->pos.x + 1, enemy->pos.y};
+                    if (!is_player_tile(grid, behind) && !is_used[behind.y * 6 + behind.x]) {
+                        enemy->pos = behind;
+                    } else {
+                        enemy->exists = false;
+                    }
+                }
+            }
 
-	        switch (enemy->type) {
-	        case SCARAB:
-	        	enemy->data.scarab.orient = rand() % 4;
-	        	break;
-	        }
+            if (enemy->exists) {
+                uint8_t cooldown = current_step(enemy).cooldown;
+                enemy->cooldown = cooldown;
+                enemy->t_rate = (float)cooldown;
+
+                switch (enemy->type) {
+                case FLUFFY:
+                    enemy->data.fluffy.origin = enemy->pos;
+                    break;
+                case SCARAB:
+                    enemy->data.scarab.orient = rand() % 4;
+                    break;
+                }
+
+                is_used[enemy->pos.y * 6 + enemy->pos.x] = true;
+            }
 	    }
     }
 }
@@ -23,12 +44,24 @@ static void update_countdown(GameplayState *s) {
 	s->countdown--;
 	if (s->countdown == 0) {
 		uint8_t difficulty = s->wave / 4;
-		spawn_wave(s->enemies, difficulty);
+		spawn_wave(s->enemies, s->grid, difficulty);
 		s->is_clear = false;
 	}
 }
 
 static bool update_wave(GameplayState *s) {
+    bool is_only_player = true;
+    for (size_t y = 0; y < N_ROWS; ++y) {
+        for (size_t x = 0; x < N_COLS; ++x) {
+            if (!s->grid[y][x].is_player) {
+                is_only_player = false;
+                break;
+            }
+        }
+    }
+
+    if (is_only_player) return true;
+
 	bool is_clear = true;
 	for (size_t i = 0; i < MAX_ENEMIES; ++i) {
 		const Enemy *enemy = &s->enemies[i];
