@@ -177,8 +177,8 @@ void draw(const State *s) {
 #if defined(PLATFORM_WEB)
 void emscripten_main_loop(void *arg) {
     State *s = arg;
-    update(&s);
-    draw(&s);
+    update(s);
+    draw(s);
 }
 #endif
 
