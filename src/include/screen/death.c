@@ -23,10 +23,10 @@ void draw_death(const DeathState *s, const DeathAssets *a) {
 	int width;
 
     text = "DEATH";
-    width = MeasureText(text, 16);
-    DrawText(text, 90 - width / 2, 60, 16, WHITE);
+    width = MeasureText(text, 20);
+    DrawText(text, 90 - width / 2, 60, 20, WHITE);
 
     text = "Press Enter to Restart";
-    width = MeasureText(text, 8);
-    DrawText(text, 90 - width / 2, 100, 8, WHITE);
+    width = MeasureText(text, 10);
+    DrawText(text, 90 - width / 2, 100, 10, WHITE);
 }

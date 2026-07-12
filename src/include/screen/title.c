@@ -50,10 +50,10 @@ void draw_title(const TitleState *s, const TitleAssets *a) {
 	int width;
 
     text = "HEXLOCK";
-    width = MeasureText(text, 16);
-    DrawText(text, 90 - width / 2, 60, 16, WHITE);
+    width = MeasureText(text, 20);
+    DrawText(text, 90 - width / 2, 60, 20, WHITE);
 
     text = "Press Enter to Start";
-    width = MeasureText(text, 8);
-    DrawText(text, 90 - width / 2, 100, 8, Fade(WHITE, s->t));
+    width = MeasureText(text, 10);
+    DrawText(text, 90 - width / 2, 100, 10, Fade(WHITE, s->t));
 }

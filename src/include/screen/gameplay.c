@@ -125,7 +125,7 @@ void load_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
     s->player.t_rate = 2.0f;
     s->player.next_t_rate = 2.0f;
     s->player.hp = MAX_PLAYER_HEALTH;
-    
+
     s->countdown = 30;
     s->is_clear = true;
 
@@ -506,8 +506,8 @@ static void draw_signs(const SignU8 signs[], size_t n_signs, Hex hex, Texture sp
 
     if (hex.valid) {
         const char *text = get_hex_desc(hex);
-        int width = MeasureText(text, 8);
-        DrawText(text, 90 - width / 2, 56, 8, WHITE);
+        int width = MeasureText(text, 10);
+        DrawText(text, 90 - width / 2, 56, 10, WHITE);
     }
 }
 
@@ -540,14 +540,14 @@ static void draw_enemy_status(uint8_t hp, uint8_t max_hp, Texture2D sprite) {
 
 static void draw_wave(uint8_t wave) {
     const char *text = TextFormat("Wave: %d", wave);
-    int width = MeasureText(text, 8);
-    DrawText(text, 90 - width / 2, 8, 8, WHITE);
+    int width = MeasureText(text, 10);
+    DrawText(text, 90 - width / 2, 8, 10, WHITE);
 }
 
 static void draw_countdown(uint8_t secs) {
     const char *text = TextFormat("%d", secs);
-    int width = MeasureText(text, 32);
-    DrawText(text, 90 - width / 2, 96, 32, WHITE);
+    int width = MeasureText(text, 30);
+    DrawText(text, 90 - width / 2, 96, 30, WHITE);
 }
 
 void draw_gameplay(const GameplayState *s, const GameplayAssets *a) {
