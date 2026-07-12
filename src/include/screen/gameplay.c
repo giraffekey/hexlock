@@ -458,15 +458,30 @@ static void draw_bullets(const Bullet bullets[], Texture2D sprite) {
                 break;
             case BULLET_WHIRLPOOL:
             case BULLET_HURRICANE:
-                frame = 12; // Placeholder
+                frame = -1;
                 break;
             }
             
-            float w = bullet->is_player ? 16 : -16;
-            Rectangle src = {frame * 16, 0, w, 16};
-            Rectangle dest = {final.x + 8, final.y + 8, 16, 16};
-            Vector2 origin = {8, 8};
-            DrawTexturePro(sprite, src, dest, origin, 0, WHITE);
+            if (frame >= 0) {
+                float w = bullet->is_player ? 16 : -16;
+                Rectangle src = {frame * 16, 0, w, 16};
+                DrawTextureRec(sprite, src, final, WHITE);
+            } else {
+                const BulletWhirlpoolData *data = &bullet->data.whirlpool;
+                if (!data->is_child) {
+                    float x = bullet->type == BULLET_WHIRLPOOL ? 0 : 80;
+                    if (data->is_moving) {
+                        float w = bullet->is_player ? 16 : -16;
+                        Rectangle src = {x, 16, w, 16};
+                        DrawTextureRec(sprite, src, final, WHITE);
+                    } else {
+                        float w = bullet->is_player ? 32 : -32;
+                        Rectangle src = {x + 16 + (data->lifetime % 2) * 32, 16, w, 32};
+                        Vector2 pos = {final.x - 8, final.y - 8};
+                        DrawTextureRec(sprite, src, pos, WHITE);
+                    }
+                }
+            }
         }
     }
 }

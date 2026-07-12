@@ -212,6 +212,7 @@ static void on_bullet_collision(Bullet *bullet, Bullet bullets[]) {
                     if (is_in_bounds(pos)) {
                         BulletData spawn_data = bullet->data;
                         spawn_data.whirlpool.lifetime++;
+                        spawn_data.whirlpool.is_child = true;
                         spawn_bullet_with_data(bullets, pos, BULLET_WHIRLPOOL, bullet->is_player, spawn_data);
                     }
                 }
@@ -238,6 +239,7 @@ static void on_bullet_collision(Bullet *bullet, Bullet bullets[]) {
                     if (is_in_bounds(pos)) {
                         BulletData spawn_data = bullet->data;
                         spawn_data.whirlpool.lifetime++;
+                        spawn_data.whirlpool.is_child = true;
                         spawn_bullet_with_data(bullets, pos, BULLET_HURRICANE, bullet->is_player, spawn_data);
                     }
                 }

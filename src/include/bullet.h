@@ -29,6 +29,7 @@ typedef struct {} BulletNoData;
 typedef struct {
     bool is_moving;
     uint8_t lifetime;
+    bool is_child;
 } BulletWhirlpoolData;
 
 typedef struct {

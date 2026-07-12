@@ -218,6 +218,7 @@ static void cast_cancer(const Player *player, Bullet bullets[], const Sounds *so
     BulletData data;
     data.whirlpool.is_moving = true;
     data.whirlpool.lifetime = 3;
+    data.whirlpool.is_child = false;
     spawn_bullet_with_data(bullets, player->pos, BULLET_WHIRLPOOL, true, data);
     PlaySound(sounds->special);
 }
@@ -226,6 +227,7 @@ static void cast_cancer_omega(const Player *player, Bullet bullets[], const Soun
     BulletData data;
     data.whirlpool.is_moving = true;
     data.whirlpool.lifetime = 5;
+    data.whirlpool.is_child = false;
     spawn_bullet_with_data(bullets, player->pos, BULLET_HURRICANE, true, data);
     PlaySound(sounds->special);
 }
