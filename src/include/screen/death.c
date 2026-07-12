@@ -10,6 +10,8 @@ void unload_death_assets(DeathAssets *a) {
 
 void load_death_screen(DeathState *s) {}
 
+void unload_death_screen(DeathState *s) {}
+
 void update_death(DeathState *s, Screen *next_screen) {
 	if (IsKeyPressed(KEY_ENTER)) *next_screen = SCREEN_GAMEPLAY;
 }

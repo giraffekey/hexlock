@@ -23,6 +23,7 @@ typedef struct {
     Texture2D enemies_sprite;
     Texture2D bullets_sprite;
     Texture2D status_sprite;
+    Music music;
 } GameplayAssets;
 
 typedef struct {
@@ -43,9 +44,13 @@ void load_gameplay_assets(GameplayAssets *a);
 
 void unload_gameplay_assets(GameplayAssets *a);
 
-void load_gameplay_screen(GameplayState *s);
+void load_gameplay_screen(GameplayState *s, const GameplayAssets *a);
+
+void unload_gameplay_screen(GameplayState *s, const GameplayAssets *a);
 
 void update_gameplay(GameplayState *s, const Sounds *sounds, Screen *next_screen);
+
+void update_gameplay_music(const GameplayAssets *a);
 
 void draw_gameplay(const GameplayState *s, const GameplayAssets *a);
 

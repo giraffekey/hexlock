@@ -19,6 +19,8 @@ typedef struct {
 	Sound place;
 	Sound charge;
 	Sound teleport;
+	Sound win;
+	Sound death;
 } Sounds;
 
 void load_sounds(Sounds *sounds);

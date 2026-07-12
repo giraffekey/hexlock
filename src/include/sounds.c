@@ -16,6 +16,8 @@ void load_sounds(Sounds *sounds) {
 	sounds->place = LoadSound("resources/sounds/place.wav");
 	sounds->charge = LoadSound("resources/sounds/charge.wav");
 	sounds->teleport = LoadSound("resources/sounds/teleport.wav");
+	sounds->win = LoadSound("resources/sounds/win.wav");
+	sounds->death = LoadSound("resources/sounds/death.wav");
 }
 
 void unload_sounds(Sounds *sounds) {
@@ -34,4 +36,6 @@ void unload_sounds(Sounds *sounds) {
     UnloadSound(sounds->place);
     UnloadSound(sounds->charge);
     UnloadSound(sounds->teleport);
+    UnloadSound(sounds->win);
+    UnloadSound(sounds->death);
 }

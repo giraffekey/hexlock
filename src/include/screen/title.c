@@ -2,16 +2,45 @@
 
 void load_title_assets(TitleAssets *a) {
     a->background = LoadTexture("resources/backgrounds/title.png");
+    a->music = LoadMusicStream("resources/music/title.wav");
 }
 
 void unload_title_assets(TitleAssets *a) {
 	UnloadTexture(a->background);
+    UnloadMusicStream(a->music);
 }
 
-void load_title_screen(TitleState *s) {}
+void load_title_screen(TitleState *s, const TitleAssets *a) {
+    s->is_increasing = true;
+
+    PlayMusicStream(a->music);
+}
+
+void unload_title_screen(TitleState *s, const TitleAssets *a) {
+    StopMusicStream(a->music);
+}
 
 void update_title(TitleState *s, Screen *next_screen) {
 	if (IsKeyPressed(KEY_ENTER)) *next_screen = SCREEN_GAMEPLAY;
+
+    float dt = GetFrameTime();
+    if (s->is_increasing) {
+        s->t += dt * 1.0f;
+        if (s->t >= 1.0f) {
+            s->t = 1.0f;
+            s->is_increasing = false;
+        }
+    } else {
+        s->t -= dt * 1.0f;
+        if (s->t <= 0.0f) {
+            s->t = 0.0f;
+            s->is_increasing = true;
+        }
+    }
+}
+
+void update_title_music(const TitleAssets *a) {
+    UpdateMusicStream(a->music);
 }
 
 void draw_title(const TitleState *s, const TitleAssets *a) {
@@ -26,5 +55,5 @@ void draw_title(const TitleState *s, const TitleAssets *a) {
 
     text = "Press Enter to Start";
     width = MeasureText(text, 8);
-    DrawText(text, 90 - width / 2, 100, 8, WHITE);
+    DrawText(text, 90 - width / 2, 100, 8, Fade(WHITE, s->t));
 }

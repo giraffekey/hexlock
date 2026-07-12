@@ -91,6 +91,7 @@ void load_gameplay_assets(GameplayAssets *a) {
     a->enemies_sprite = LoadTexture("resources/sprites/enemies.png");
     a->bullets_sprite = LoadTexture("resources/sprites/bullets.png");
     a->status_sprite = LoadTexture("resources/sprites/status.png");
+    a->music = LoadMusicStream("resources/music/gameplay.wav");
 }
 
 void unload_gameplay_assets(GameplayAssets *a) {
@@ -101,9 +102,10 @@ void unload_gameplay_assets(GameplayAssets *a) {
     UnloadTexture(a->enemies_sprite);
     UnloadTexture(a->bullets_sprite);
     UnloadTexture(a->status_sprite);
+    UnloadMusicStream(a->music);
 }
 
-void load_gameplay_screen(GameplayState *s) {
+void load_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
 	s->tick = TICK_RATE;
 
     GlyphSpawner spawner = {{}, GLYPH_SPAWN_RATE, 0};
@@ -126,6 +128,12 @@ void load_gameplay_screen(GameplayState *s) {
     
     s->countdown = 30;
     s->is_clear = true;
+
+    PlayMusicStream(a->music);
+}
+
+void unload_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
+    StopMusicStream(a->music);
 }
 
 static void update_time(GameplayState *s, float dt) {
@@ -145,11 +153,15 @@ static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_scr
 
     if (s->player.hp == 0) {
         *next_screen = SCREEN_DEATH;
+        PlaySound(sounds->death);
     } else if (s->is_clear) {
         update_countdown(s);
     } else {
         bool win = update_wave(s);
-        if (win) *next_screen = SCREEN_WIN;
+        if (win) {
+            *next_screen = SCREEN_WIN;
+            PlaySound(sounds->win);
+        }
     }
 }
 
@@ -164,6 +176,10 @@ void update_gameplay(GameplayState *s, const Sounds *sounds, Screen *next_screen
         update_tick(s, sounds, next_screen);
         s->tick += TICK_RATE;
     }
+}
+
+void update_gameplay_music(const GameplayAssets *a) {
+    UpdateMusicStream(a->music);
 }
 
 static Vector2 tile_to_grid_pos(Position pos) {

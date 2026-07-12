@@ -82,16 +82,33 @@ void load_assets(Assets *a) {
 void load_screen(State *s) {
     switch (s->screen) {
     case SCREEN_TITLE:
-        load_title_screen(&s->screen_state.title);
+        load_title_screen(&s->screen_state.title, &s->assets.title);
         break;
     case SCREEN_GAMEPLAY:
-        load_gameplay_screen(&s->screen_state.gameplay);
+        load_gameplay_screen(&s->screen_state.gameplay, &s->assets.gameplay);
         break;
     case SCREEN_WIN:
         load_win_screen(&s->screen_state.win);
         break;
     case SCREEN_DEATH:
         load_death_screen(&s->screen_state.death);
+        break;
+    }
+}
+
+void unload_screen(State *s) {
+    switch (s->screen) {
+    case SCREEN_TITLE:
+        unload_title_screen(&s->screen_state.title, &s->assets.title);
+        break;
+    case SCREEN_GAMEPLAY:
+        unload_gameplay_screen(&s->screen_state.gameplay, &s->assets.gameplay);
+        break;
+    case SCREEN_WIN:
+        unload_win_screen(&s->screen_state.win);
+        break;
+    case SCREEN_DEATH:
+        unload_death_screen(&s->screen_state.death);
         break;
     }
 }
@@ -127,9 +144,11 @@ void update(State *s) {
     switch (s->screen) {
     case SCREEN_TITLE:
         update_title(&s->screen_state.title, &next_screen);
+        update_title_music(&s->assets.title);
         break;
     case SCREEN_GAMEPLAY:
         update_gameplay(&s->screen_state.gameplay, &s->assets.sounds, &next_screen);
+        update_gameplay_music(&s->assets.gameplay);
         break;
     case SCREEN_WIN:
         update_win(&s->screen_state.win, &next_screen);
@@ -140,6 +159,7 @@ void update(State *s) {
     }
 
     if (next_screen != s->screen) {
+        unload_screen(s);
         s->screen = next_screen;
         memset(&s->screen_state, 0, sizeof(ScreenState));
         load_screen(s);

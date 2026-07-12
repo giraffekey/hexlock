@@ -17,6 +17,8 @@ void unload_death_assets(DeathAssets *a);
 
 void load_death_screen(DeathState *s);
 
+void unload_death_screen(DeathState *s);
+
 void update_death(DeathState *s, Screen *next_screen);
 
 void draw_death(const DeathState *s, const DeathAssets *a);
