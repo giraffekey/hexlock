@@ -21,7 +21,9 @@ void unload_title_screen(TitleState *s, const TitleAssets *a) {
 }
 
 void update_title(TitleState *s, Screen *next_screen) {
-	if (IsKeyPressed(KEY_ENTER)) *next_screen = SCREEN_GAMEPLAY;
+    if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
+        *next_screen = SCREEN_GAMEPLAY;
+    }
 
     float dt = GetFrameTime();
     if (s->is_increasing) {

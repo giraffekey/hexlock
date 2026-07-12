@@ -46,6 +46,7 @@ static void update_countdown(GameplayState *s) {
 		uint8_t difficulty = s->wave / 4;
 		spawn_wave(s->enemies, s->grid, difficulty);
 		s->is_clear = false;
+        s->time_limit = TIME_LIMIT;
 	}
 }
 
@@ -127,6 +128,7 @@ void load_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
     s->player.hp = MAX_PLAYER_HEALTH;
 
     s->countdown = 30;
+    s->time_limit = TIME_LIMIT;
     s->is_clear = true;
 
     PlayMusicStream(a->music);
@@ -157,11 +159,19 @@ static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_scr
     } else if (s->is_clear) {
         update_countdown(s);
     } else {
+        if (s->time_limit == 0) {
+            memset(s->enemies, 0, sizeof(Enemy) * MAX_ENEMIES);
+            s->player.hp--;
+            PlaySound(sounds->hit);
+        }
+
         bool win = update_wave(s);
         if (win) {
             *next_screen = SCREEN_WIN;
             PlaySound(sounds->win);
         }
+        
+        if (s->time_limit > 0) s->time_limit--;
     }
 }
 
@@ -497,13 +507,15 @@ static void draw_glyphs(const Glyph glyphs[], Texture sprite) {
     }
 }
 
-static void draw_signs(const SignU8 signs[], size_t n_signs, Hex hex, Texture sprite) {
+static void draw_signs(const SignU8 signs[], size_t n_signs, Texture sprite) {
     for (size_t i = 0; i < n_signs; ++i) {
         Rectangle src = {signs[i] * 16, 0, 16, 16};
         Vector2 pos = {58 + i * 24, 30};
         DrawTextureRec(sprite, src, pos, WHITE);
     }
+}
 
+static void draw_hex_desc(Hex hex) {
     if (hex.valid) {
         const char *text = get_hex_desc(hex);
         int width = MeasureText(text, 10);
@@ -511,12 +523,18 @@ static void draw_signs(const SignU8 signs[], size_t n_signs, Hex hex, Texture sp
     }
 }
 
-static void draw_player_status(uint8_t hp, Texture2D sprite) {
+static void draw_player_hp(uint8_t hp, Texture2D sprite) {
     for (uint8_t i = 0; i < MAX_PLAYER_HEALTH; ++i) {
         Rectangle src = {i < hp ? 0 : 8, 0, 6, 16};
         Vector2 pos = {22 + i * 6, 164};
         DrawTextureRec(sprite, src, pos, WHITE);
     }
+}
+
+static void draw_selected(size_t selected, Texture2D sprite) {
+    Rectangle src = {32, 0, 16, 16};
+    Vector2 pos = {10 + selected * 16, 150};
+    DrawTextureRec(sprite, src, pos, WHITE);
 }
 
 static void draw_hex_queue(const Hex hexes[], size_t n_hexes, Texture2D sprite) {
@@ -530,7 +548,7 @@ static void draw_hex_queue(const Hex hexes[], size_t n_hexes, Texture2D sprite) 
     }
 }
 
-static void draw_enemy_status(uint8_t hp, uint8_t max_hp, Texture2D sprite) {
+static void draw_enemy_hp(uint8_t hp, uint8_t max_hp, Texture2D sprite) {
     for (uint8_t i = 0; i < max_hp; ++i) {
         Rectangle src = {i < hp ? 16 : 24, 0, 6, 16};
         Vector2 pos = {158 - i * 6, 164};
@@ -542,6 +560,11 @@ static void draw_wave(uint8_t wave) {
     const char *text = TextFormat("Wave: %d", wave);
     int width = MeasureText(text, 10);
     DrawText(text, 90 - width / 2, 8, 10, WHITE);
+}
+
+static void draw_time_limit(uint16_t time_limit) {
+    const char *text = TextFormat("%d", time_limit);
+    DrawText(text, 160, 8, 10, WHITE);
 }
 
 static void draw_countdown(uint8_t secs) {
@@ -557,14 +580,17 @@ void draw_gameplay(const GameplayState *s, const GameplayAssets *a) {
     draw_player(&s->player, a->player_sprite);
     draw_enemies(s->enemies, a->enemies_sprite);
     draw_bullets(s->bullets, a->bullets_sprite);
-    draw_signs(s->player.signs, s->player.n_signs, s->player.hexes[0], a->signs_sprite);
+    draw_signs(s->player.signs, s->player.n_signs, a->signs_sprite);
+    draw_hex_desc(s->player.hexes[s->player.selected]);
     
-    draw_player_status(s->player.hp, a->status_sprite);
+    draw_player_hp(s->player.hp, a->status_sprite);
+    if (s->player.n_hexes > 0) draw_selected(s->player.selected, a->status_sprite);
     draw_hex_queue(s->player.hexes, min(s->player.n_hexes, MAX_HEXES), a->signs_sprite);
 
     const Enemy *target = &s->enemies[s->target_enemy];
-    if (target->exists) draw_enemy_status(target->hp, MAX_ENEMY_HEALTH[target->type], a->status_sprite);
+    if (target->exists) draw_enemy_hp(target->hp, MAX_ENEMY_HEALTH[target->type], a->status_sprite);
 
     draw_wave(s->wave + 1);
     if (s->countdown > 0) draw_countdown((s->countdown + 9) / 10);
+    else draw_time_limit(s->time_limit / 10);
 }

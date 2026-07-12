@@ -60,6 +60,7 @@ typedef struct {
     size_t n_signs;
     Hex hexes[MAX_HEXES];
     size_t n_hexes;
+    size_t selected;
     uint16_t statuses[N_STATUSES];
 } Player;
 

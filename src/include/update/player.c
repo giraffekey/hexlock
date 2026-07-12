@@ -1,10 +1,27 @@
 #include "player.h"
 
 void handle_input(Player *player, const Grid grid) {
+    bool is_key_prev_pressed = IsKeyPressed(KEY_TAB) && IsKeyDown(KEY_LEFT_SHIFT);
+    bool is_gamepad_prev_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2);
+    if (is_key_prev_pressed || is_gamepad_prev_pressed) {
+        if (player->n_hexes > 0) {
+            player->selected = (player->selected + player->n_hexes - 1) % player->n_hexes;
+        }
+    }
+
+    bool is_key_next_pressed = IsKeyPressed(KEY_C) || IsKeyPressed(KEY_TAB) && !IsKeyDown(KEY_LEFT_SHIFT);
+    bool is_gamepad_next_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_2);
+    if (is_key_next_pressed || is_gamepad_next_pressed) {
+        if (player->n_hexes > 0) {
+            player->selected = (player->selected + 1) % player->n_hexes;
+        }
+    }
+
     if (player->cooldown > 0 && player->next_action != ACTION_WAIT) return;
 
+    bool is_key_left_pressed = IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A);
     bool is_gamepad_left_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT);
-    if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A) || is_gamepad_left_pressed) {
+    if (is_key_left_pressed || is_gamepad_left_pressed) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x - 1 - (player->action == ACTION_LEFT), player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
@@ -354,7 +371,7 @@ static void cast_pisces_omega(Player *player, const Sounds *sounds) {
 }
 
 static void cast_hex(Player *player, Grid grid, Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
-    Hex hex = player->hexes[0];
+    Hex hex = player->hexes[player->selected];
     if (hex.valid) {
         switch (hex.sign + hex.omega * N_SIGNS) {
         case ARIES:

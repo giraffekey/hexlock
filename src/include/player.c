@@ -94,10 +94,16 @@ void add_hex(Player *player, Hex hex) {
 
 void use_hex(Player *player) {
     player->n_hexes = min(player->n_hexes, MAX_HEXES) - 1;
-    for (size_t i = 0; i < player->n_hexes; ++i) {
+    for (size_t i = player->selected; i < player->n_hexes; ++i) {
         player->hexes[i] = player->hexes[i + 1];
     }
     player->hexes[player->n_hexes].valid = false;
+
+    if (player->n_hexes == 0) {
+        player->selected = 0;
+    } else if (player->selected > player->n_hexes - 1) {
+        player->selected = player->n_hexes - 1;
+    }
 }
 
 DamageStatus damage_player(Player *player, uint8_t damage) {

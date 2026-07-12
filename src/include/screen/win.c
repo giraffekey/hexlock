@@ -13,7 +13,9 @@ void load_win_screen(WinState *s) {}
 void unload_win_screen(WinState *s) {}
 
 void update_win(WinState *s, Screen *next_screen) {
-	if (IsKeyPressed(KEY_ENTER)) *next_screen = SCREEN_GAMEPLAY;
+    if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
+        *next_screen = SCREEN_GAMEPLAY;
+    }
 }
 
 void draw_win(const WinState *s, const WinAssets *a) {

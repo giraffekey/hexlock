@@ -16,6 +16,15 @@ Keyboard:
  - WASD / Arrow Keys - Move
  - Space / Z - Cast missile
  - F / X - Cast hex
+ - Tab / C - Select hex
+ - Enter - Continue
+
+Gamepad:
+ - D-Pad - Move
+ - A / X / Cross / Square - Cast missile
+ - B / Y / Circle / Triangle - Cast hex
+ - Left Bumper / Right Bumper - Select hex
+ - Start - Continue
 
 Gather three astral signs to add a hex to your casting pool.
 

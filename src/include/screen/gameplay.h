@@ -14,6 +14,7 @@
 #include "../update/bullet.h"
 
 #define N_WAVES 20
+#define TIME_LIMIT 300
 
 typedef struct {
     Texture2D background;
@@ -36,6 +37,7 @@ typedef struct {
     Bullet bullets[MAX_BULLETS];
     uint8_t wave;
     uint8_t countdown;
+    uint16_t time_limit;
     bool is_clear;
     size_t target_enemy;
 } GameplayState;

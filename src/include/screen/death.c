@@ -13,7 +13,9 @@ void load_death_screen(DeathState *s) {}
 void unload_death_screen(DeathState *s) {}
 
 void update_death(DeathState *s, Screen *next_screen) {
-	if (IsKeyPressed(KEY_ENTER)) *next_screen = SCREEN_GAMEPLAY;
+	if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
+        *next_screen = SCREEN_GAMEPLAY;
+    }
 }
 
 void draw_death(const DeathState *s, const DeathAssets *a) {
