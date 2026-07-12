@@ -1,7 +1,7 @@
 #include "glyph.h"
 
 static uint8_t glyph_spawn_rate(uint8_t wave) {
-    return GLYPH_SPAWN_RATE - wave * 3 / 4;
+    return GLYPH_SPAWN_RATE - wave * 1 / 2;
 }
 
 static void spawn_glyph(SignU8 sign, Glyph glyphs[], uint8_t wave, const Grid grid, const Player *player) {
