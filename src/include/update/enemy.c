@@ -292,7 +292,7 @@ static EnemyPlan create_enemy_plan(const Enemy *enemy, const Grid grid, const En
     return (EnemyPlan){0};
 }
 
-static void move_enemy(Enemy *enemy, EnemyActionU8 dir, Player *player, Bullet bullets[]) {
+static void move_enemy(Enemy *enemy, EnemyActionU8 dir, Player *player, Bullet bullets[], const Sounds *sounds) {
     switch (dir) {
     case ENEMY_ACTION_LEFT:
         enemy->pos.x--;
@@ -310,8 +310,8 @@ static void move_enemy(Enemy *enemy, EnemyActionU8 dir, Player *player, Bullet b
         break;
     }
 
-    check_enemy_player_collision(enemy, player, bullets);
-    check_enemy_bullet_collision(enemy, bullets);
+    check_enemy_player_collision(enemy, player, bullets, sounds);
+    check_enemy_bullet_collision(enemy, bullets, sounds);
 }
 
 static void hide_enemy(Enemy *enemy) {
@@ -358,12 +358,12 @@ static void return_enemy(Enemy *enemy) {
     }
 }
 
-static void melee_attack(Enemy *enemy, Player *player, Bullet bullets[]) {
+static void melee_attack(Enemy *enemy, Player *player, Bullet bullets[], const Sounds *sounds) {
     Position attack_pos = {enemy->pos.x - 1, enemy->pos.y};
-    if (is_pos_eq(player->pos, attack_pos)) on_player_enemy_collision(player, enemy, bullets);
+    if (is_pos_eq(player->pos, attack_pos)) on_player_enemy_collision(player, enemy, bullets, sounds);
 }
 
-static void teleport_enemy(Enemy *enemy, const Grid grid, const Enemy enemies[]) {
+static void teleport_enemy(Enemy *enemy, const Grid grid, const Enemy enemies[], const Sounds *sounds) {
     bool is_used[18] = {0};
     find_used(is_used, grid, enemies, true, false, MAX_ENEMIES);
     bool has_available = any_available(is_used);
@@ -376,15 +376,20 @@ static void teleport_enemy(Enemy *enemy, const Grid grid, const Enemy enemies[])
         pos.y = rand() % 3;
     } while (is_used[pos.y * 6 + pos.x]);
     enemy->pos = pos;
+    PlaySound(sounds->teleport);
 }
 
-static void teleport_to_player(Enemy *enemy, const Grid grid, Player *player) {
+static void teleport_to_player(Enemy *enemy, const Grid grid, Player *player, const Sounds *sounds) {
     Position pos = {player->pos.x + 1, player->pos.y};
-    if (is_wall(grid, pos)) enemy->plan = (EnemyPlan){{ENEMY_ACTION_WAIT, 1}, 0, 1};
-    else enemy->pos = pos;
+    if (is_wall(grid, pos)) {
+        enemy->plan = (EnemyPlan){{ENEMY_ACTION_WAIT, 1}, 0, 1};
+    } else {
+        enemy->pos = pos;
+        PlaySound(sounds->teleport);
+    }
 }
 
-static void execute_enemy_plan(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[]) {
+static void execute_enemy_plan(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[], const Sounds *sounds) {
     EnemyStep step = current_step(enemy);
     switch (step.action) {
     case ENEMY_ACTION_WAIT:
@@ -393,16 +398,19 @@ static void execute_enemy_plan(Enemy *enemy, size_t id, const Grid grid, const E
     case ENEMY_ACTION_RIGHT:
     case ENEMY_ACTION_UP:
     case ENEMY_ACTION_DOWN:
-        move_enemy(enemy, step.action, player, bullets);
+        move_enemy(enemy, step.action, player, bullets, sounds);
         break;
     case ENEMY_ACTION_POWDER:
         spawn_bullet(bullets, enemy->pos, BULLET_POWDER, false);
+        PlaySound(sounds->magic);
         break;
     case ENEMY_ACTION_PELLET:
         spawn_bullet(bullets, enemy->pos, BULLET_PELLET, false);
+        PlaySound(sounds->throw);
         break;
     case ENEMY_ACTION_SPINY:
         spawn_bullet(bullets, enemy->pos, BULLET_SPINY, false);
+        PlaySound(sounds->throw);
         break;
     case ENEMY_ACTION_HIDE:
         hide_enemy(enemy);
@@ -420,13 +428,13 @@ static void execute_enemy_plan(Enemy *enemy, size_t id, const Grid grid, const E
         return_enemy(enemy);
         break;
     case ENEMY_ACTION_MELEE_ATTACK:
-        melee_attack(enemy, player, bullets);
+        melee_attack(enemy, player, bullets, sounds);
         break;
     case ENEMY_ACTION_TELEPORT:
-        teleport_enemy(enemy, grid, enemies);
+        teleport_enemy(enemy, grid, enemies, sounds);
         break;
     case ENEMY_ACTION_TELEPORT_TO_PLAYER:
-        teleport_to_player(enemy, grid, player);
+        teleport_to_player(enemy, grid, player, sounds);
         break;
     }
     enemy->plan.index++;
@@ -464,7 +472,7 @@ static bool next_pos_taken(Enemy *enemy, size_t id, const Grid grid, const Enemy
     return false;
 }
 
-static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[]) {
+static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[], const Sounds *sounds) {
     if (enemy->cooldown > 0) enemy->cooldown--;
 
     if (enemy->cooldown == 0) {
@@ -475,20 +483,10 @@ static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy e
         }
 
         if (enemy->plan.index < enemy->plan.size) {
-            execute_enemy_plan(enemy, id, grid, enemies, player, bullets);
+            execute_enemy_plan(enemy, id, grid, enemies, player, bullets, sounds);
         } else {
             enemy->plan = create_enemy_plan(enemy, grid, enemies, player);
-        }
-
-        if (get_tile_type(grid, enemy->pos) == TILE_MAGMA) {
-            if (enemy->magma_cooldown > 0) enemy->magma_cooldown--;
-            if (enemy->magma_cooldown == 0) {
-                enemy->hp--;
-                if (enemy->hp == 0) enemy->exists = false;
-                enemy->magma_cooldown = 4;
-            }
-        } else {
-            enemy->magma_cooldown = 0;
+            if (enemy->type == FLUFFY && current_action(enemy) == ENEMY_ACTION_LEFT) PlaySound(sounds->charge);
         }
 
         uint8_t cooldown = current_step(enemy).cooldown;
@@ -498,12 +496,24 @@ static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy e
 
         if (next_pos_taken(enemy, id, grid, enemies)) enemy->plan = create_enemy_plan(enemy, grid, enemies, player);
     }
+
+    if (get_tile_type(grid, enemy->pos) == TILE_MAGMA) {
+        if (enemy->magma_cooldown > 0) enemy->magma_cooldown--;
+        if (enemy->magma_cooldown == 0) {
+            enemy->hp--;
+            if (enemy->hp == 0) enemy->exists = false;
+            enemy->magma_cooldown = 4;
+            PlaySound(sounds->hit);
+        }
+    } else {
+        enemy->magma_cooldown = 0;
+    }
 }
 
-void update_enemies(Enemy enemies[], const Grid grid, Player *player, Bullet bullets[]) {
+void update_enemies(Enemy enemies[], const Grid grid, Player *player, Bullet bullets[], const Sounds *sounds) {
     for (size_t i = 0; i < MAX_ENEMIES; ++i) {
         Enemy *enemy = &enemies[i];
-        if (enemy->exists) update_enemy(enemy, i, grid, enemies, player, bullets);
+        if (enemy->exists) update_enemy(enemy, i, grid, enemies, player, bullets, sounds);
     }
 }
 

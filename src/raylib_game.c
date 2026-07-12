@@ -25,6 +25,7 @@
 #include "include/bullet.h"
 #include "include/collide.h"
 #include "include/wave.h"
+#include "include/sounds.h"
 #include "include/update/glyph.h"
 #include "include/update/player.h"
 #include "include/update/enemy.h"
@@ -53,6 +54,7 @@ typedef struct {
     GameplayAssets gameplay;
     WinAssets win;
     DeathAssets death;
+    Sounds sounds;
 } Assets;
 
 typedef union {
@@ -74,6 +76,7 @@ void load_assets(Assets *a) {
     load_gameplay_assets(&a->gameplay);
     load_win_assets(&a->win);
     load_death_assets(&a->death);
+    load_sounds(&a->sounds);
 }
 
 void load_screen(State *s) {
@@ -97,8 +100,11 @@ void load(State *s) {
     s->target = LoadRenderTexture(GAME_WIDTH, GAME_HEIGHT);
     SetTextureFilter(s->target.texture, TEXTURE_FILTER_POINT);
 
+    InitAudioDevice();
+    
     load_assets(&s->assets);
     load_screen(s);
+
 }
 
 void unload_assets(Assets *a) {
@@ -106,10 +112,12 @@ void unload_assets(Assets *a) {
     unload_gameplay_assets(&a->gameplay);
     unload_win_assets(&a->win);
     unload_death_assets(&a->death);
+    unload_sounds(&a->sounds);
 }
 
 void unload(State *s) {
     unload_assets(&s->assets);
+    CloseAudioDevice();
     UnloadRenderTexture(s->target);
 }
 
@@ -121,7 +129,7 @@ void update(State *s) {
         update_title(&s->screen_state.title, &next_screen);
         break;
     case SCREEN_GAMEPLAY:
-        update_gameplay(&s->screen_state.gameplay, &next_screen);
+        update_gameplay(&s->screen_state.gameplay, &s->assets.sounds, &next_screen);
         break;
     case SCREEN_WIN:
         update_win(&s->screen_state.win, &next_screen);

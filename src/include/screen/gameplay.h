@@ -45,7 +45,7 @@ void unload_gameplay_assets(GameplayAssets *a);
 
 void load_gameplay_screen(GameplayState *s);
 
-void update_gameplay(GameplayState *s, Screen *next_screen);
+void update_gameplay(GameplayState *s, const Sounds *sounds, Screen *next_screen);
 
 void draw_gameplay(const GameplayState *s, const GameplayAssets *a);
 

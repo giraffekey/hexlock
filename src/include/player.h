@@ -36,6 +36,13 @@ typedef enum {
     N_STATUSES,
 } Status;
 
+typedef enum {
+    DAMAGE_HIT,
+    DAMAGE_BLOCK,
+    DAMAGE_HEAL,
+    DAMAGE_REFLECT,
+} DamageStatus;
+
 typedef struct {
     Position pos;
     float t;
@@ -47,6 +54,7 @@ typedef struct {
     float next_t_rate;
     uint8_t wait_frame;
     uint8_t missile_delay;
+    uint8_t magma_cooldown;
     uint8_t hp;
     SignU8 signs[MAX_SIGNS];
     size_t n_signs;
@@ -65,6 +73,6 @@ void add_hex(Player *player, Hex hex);
 
 void use_hex(Player *player);
 
-void damage_player(Player *player, uint8_t damage);
+DamageStatus damage_player(Player *player, uint8_t damage);
 
 #endif

@@ -1,6 +1,23 @@
 #include "collide.h"
 
-void check_player_glyph_collision(Player *player, Glyph glyphs[]) {
+void play_damage_sound(DamageStatus status, const Sounds *sounds) {
+    switch (status) {
+    case DAMAGE_HIT:
+        PlaySound(sounds->hit);
+        break;
+    case DAMAGE_BLOCK:
+        PlaySound(sounds->block);
+        break;
+    case DAMAGE_HEAL:
+        PlaySound(sounds->heal);
+        break;
+    case DAMAGE_REFLECT:
+        PlaySound(sounds->reflect);
+        break;
+    }
+}
+
+void check_player_glyph_collision(Player *player, Glyph glyphs[], const Sounds *sounds) {
     for (size_t i = 0; i < MAX_GLYPHS; ++i) {
         Glyph *glyph = &glyphs[i];
         if (glyph->exists && is_pos_eq(player->pos, glyph->pos)) {
@@ -9,7 +26,15 @@ void check_player_glyph_collision(Player *player, Glyph glyphs[]) {
 
             if (player->n_signs == MAX_SIGNS) {
                 Hex hex = find_hex(player->signs);
-                if (hex.valid) add_hex(player, hex);
+                if (hex.valid) {
+                    add_hex(player, hex);
+                    PlaySound(sounds->success);
+                } else {
+                    player->n_signs = 0;
+                    PlaySound(sounds->fail);
+                }
+            } else {
+                PlaySound(sounds->glyph);
             }
 
             glyph->exists = false;
@@ -36,16 +61,18 @@ static void force_return(Enemy *enemy) {
     }
 }
 
-void on_player_enemy_collision(Player *player, Enemy *enemy, Bullet bullets[]) {
+void on_player_enemy_collision(Player *player, Enemy *enemy, Bullet bullets[], const Sounds *sounds) {
     switch (enemy->type) {
     case WISP:
     case SCARAB:
-        damage_player(player, 2);
+        DamageStatus status = damage_player(player, 2);
+        play_damage_sound(status, sounds);
         break;
     case FLUFFY:
         if (current_action(enemy) != ENEMY_ACTION_RETURN) {
-            damage_player(player, 3);
             force_return(enemy);
+            DamageStatus status = damage_player(player, 3);
+            play_damage_sound(status, sounds);
         }
         break;
     }
@@ -57,18 +84,18 @@ void on_player_enemy_collision(Player *player, Enemy *enemy, Bullet bullets[]) {
     }
 }
 
-void check_player_enemy_collision(Player *player, Enemy enemies[], Bullet bullets[]) {
+void check_player_enemy_collision(Player *player, Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
     for (size_t i = 0; i < MAX_ENEMIES; ++i) {
         Enemy *enemy = &enemies[i];
-        if (enemy->exists && is_pos_eq(player->pos, enemy->pos)) on_player_enemy_collision(player, enemy, bullets);
+        if (enemy->exists && is_pos_eq(player->pos, enemy->pos)) on_player_enemy_collision(player, enemy, bullets, sounds);
     }
 }
 
-void check_enemy_player_collision(Enemy *enemy, Player *player, Bullet bullets[]) {
-    if (is_pos_eq(enemy->pos, player->pos)) on_player_enemy_collision(player, enemy, bullets);
+void check_enemy_player_collision(Enemy *enemy, Player *player, Bullet bullets[], const Sounds *sounds) {
+    if (is_pos_eq(enemy->pos, player->pos)) on_player_enemy_collision(player, enemy, bullets, sounds);
 }
 
-static void on_bullet_player_collision(Bullet *bullet, Player *player, Bullet bullets[]) {
+static void on_bullet_player_collision(Bullet *bullet, Player *player, Bullet bullets[], const Sounds *sounds) {
     uint8_t damage = get_bullet_damage(bullet->type);
 
     if (player->statuses[STATUS_REFLECT]) {
@@ -86,7 +113,8 @@ static void on_bullet_player_collision(Bullet *bullet, Player *player, Bullet bu
         }
     }
 
-    damage_player(player, damage);
+    DamageStatus status = damage_player(player, damage);
+    play_damage_sound(status, sounds);
 
     if (player->statuses[STATUS_WILDFIRE_CLOAK]) {
         spawn_bullet(bullets, player->pos, BULLET_WILDFIRE, true);
@@ -95,11 +123,23 @@ static void on_bullet_player_collision(Bullet *bullet, Player *player, Bullet bu
     }
 }
 
-static void on_bullet_enemy_collision(Bullet *bullet, Enemy *enemy) {
+static void on_bullet_enemy_collision(Bullet *bullet, Enemy *enemy, const Sounds *sounds) {
     if (can_be_hit(enemy)) {
         uint8_t damage = get_bullet_damage(bullet->type);
         if (damage >= enemy->hp) enemy->exists = false;
         else enemy->hp -= damage;
+        PlaySound(sounds->hit);
+    } else {
+        switch (enemy->type) {
+        case WISP:
+            PlaySound(sounds->block);
+            break;
+        case SCARAB:
+            PlaySound(sounds->reflect);
+            break;
+        default:
+            break;
+        }
     }
 
     bool remove_bullet = true;
@@ -207,40 +247,40 @@ static void on_bullet_collision(Bullet *bullet, Bullet bullets[]) {
     }
 }
 
-void check_bullet_player_collision(Bullet *bullet, Player *player, Bullet bullets[]) {
+void check_bullet_player_collision(Bullet *bullet, Player *player, Bullet bullets[], const Sounds *sounds) {
     if (is_pos_eq(bullet->pos, player->pos)) {
-        on_bullet_player_collision(bullet, player, bullets);
+        on_bullet_player_collision(bullet, player, bullets, sounds);
         on_bullet_collision(bullet, bullets);
     }
 }
 
-void check_player_bullet_collision(Player *player, Bullet bullets[]) {
+void check_player_bullet_collision(Player *player, Bullet bullets[], const Sounds *sounds) {
     for (size_t i = 0; i < MAX_BULLETS; ++i) {
         Bullet *bullet = &bullets[i];
         if (bullet->exists && is_pos_eq(player->pos, bullet->pos)) {
-            on_bullet_player_collision(bullet, player, bullets);
+            on_bullet_player_collision(bullet, player, bullets, sounds);
             on_bullet_collision(bullet, bullets);
             break;
         }
     }
 }
 
-void check_bullet_enemy_collision(Bullet *bullet, Enemy enemies[], Bullet bullets[]) {
+void check_bullet_enemy_collision(Bullet *bullet, Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
     for (size_t i = 0; i < MAX_ENEMIES; ++i) {
         Enemy *enemy = &enemies[i];
         if (enemy->exists && is_pos_eq(bullet->pos, enemy->pos)) {
-            on_bullet_enemy_collision(bullet, enemy);
+            on_bullet_enemy_collision(bullet, enemy, sounds);
             on_bullet_collision(bullet, bullets);
             break;
         }
     }
 }
 
-void check_enemy_bullet_collision(Enemy *enemy, Bullet bullets[]) {
+void check_enemy_bullet_collision(Enemy *enemy, Bullet bullets[], const Sounds *sounds) {
     for (size_t i = 0; i < MAX_BULLETS; ++i) {
         Bullet *bullet = &bullets[i];
         if (bullet->exists && is_pos_eq(enemy->pos, bullet->pos)) {
-            on_bullet_enemy_collision(bullet, enemy);
+            on_bullet_enemy_collision(bullet, enemy, sounds);
             on_bullet_collision(bullet, bullets);
             break;
         }

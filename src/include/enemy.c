@@ -19,6 +19,7 @@ bool can_be_hit(const Enemy *enemy) {
     case SCARAB: return action != ENEMY_ACTION_SPIN;
     case FLUFFY: return action != ENEMY_ACTION_RETURN;
     case MOLE: return !enemy->data.mole.hidden;
+    default: return true;
     }
     return true;
 }

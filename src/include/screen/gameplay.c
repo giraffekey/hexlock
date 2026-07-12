@@ -135,11 +135,11 @@ static void update_time(GameplayState *s, float dt) {
     update_bullets_time(s->bullets, dt);
 }
 
-static void update_tick(GameplayState *s, Screen *next_screen) {
+static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_screen) {
     update_glyphs(s->glyphs);
-    update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets);
-    update_enemies(s->enemies, s->grid, &s->player, s->bullets);
-    update_bullets(s->bullets, s->grid, &s->player, s->enemies);
+    update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets, sounds);
+    update_enemies(s->enemies, s->grid, &s->player, s->bullets, sounds);
+    update_bullets(s->bullets, s->grid, &s->player, s->enemies, sounds);
     update_glyph_spawner(&s->glyph_spawner, s->glyphs, s->wave, s->grid, &s->player);
     update_target_enemy(&s->target_enemy, &s->player, s->enemies);
 
@@ -153,7 +153,7 @@ static void update_tick(GameplayState *s, Screen *next_screen) {
     }
 }
 
-void update_gameplay(GameplayState *s, Screen *next_screen) {
+void update_gameplay(GameplayState *s, const Sounds *sounds, Screen *next_screen) {
     handle_input(&s->player, s->grid);
 
     float dt = GetFrameTime();
@@ -161,7 +161,7 @@ void update_gameplay(GameplayState *s, Screen *next_screen) {
 
     s->tick -= dt;
     if (s->tick <= 0.0f) {
-        update_tick(s, next_screen);
+        update_tick(s, sounds, next_screen);
         s->tick += TICK_RATE;
     }
 }
@@ -442,6 +442,7 @@ static void draw_bullets(const Bullet bullets[], Texture2D sprite) {
                 break;
             case BULLET_WHIRLPOOL:
             case BULLET_HURRICANE:
+                frame = 12; // Placeholder
                 break;
             }
             

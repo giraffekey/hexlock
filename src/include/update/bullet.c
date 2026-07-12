@@ -63,7 +63,7 @@ static void hit_wall(Bullet *bullet, Grid grid) {
 	}
 }
 
-static void update_bullet(Bullet *bullet, Grid grid, Player *player, Enemy enemies[], Bullet spawned[]) {
+static void update_bullet(Bullet *bullet, Grid grid, Player *player, Enemy enemies[], Bullet spawned[], const Sounds *sounds) {
     bool active = true;
     switch (bullet->type) {
     case BULLET_TWISTER:
@@ -85,8 +85,8 @@ static void update_bullet(Bullet *bullet, Grid grid, Player *player, Enemy enemi
         if (is_wall(grid, bullet->pos)) {
             hit_wall(bullet, grid);
         } else {
-            if (bullet->is_player) check_bullet_enemy_collision(bullet, enemies, spawned);
-            else check_bullet_player_collision(bullet, player, spawned);
+            if (bullet->is_player) check_bullet_enemy_collision(bullet, enemies, spawned, sounds);
+            else check_bullet_player_collision(bullet, player, spawned, sounds);
         }
     } else {
         bullet->exists = false;
@@ -95,12 +95,12 @@ static void update_bullet(Bullet *bullet, Grid grid, Player *player, Enemy enemi
     if (bullet->type == BULLET_FLAME) bullet->exists = false;
 }
 
-void update_bullets(Bullet bullets[], Grid grid, Player *player, Enemy enemies[]) {
+void update_bullets(Bullet bullets[], Grid grid, Player *player, Enemy enemies[], const Sounds *sounds) {
     Bullet spawned[MAX_BULLETS] = {0};
 
     for (size_t i = 0; i < MAX_BULLETS; ++i) {
         Bullet *bullet = &bullets[i];
-        if (bullet->exists) update_bullet(bullet, grid, player, enemies, spawned);
+        if (bullet->exists) update_bullet(bullet, grid, player, enemies, spawned, sounds);
     }
 
     size_t start = 0;

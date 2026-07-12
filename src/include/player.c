@@ -100,22 +100,28 @@ void use_hex(Player *player) {
     player->hexes[player->n_hexes].valid = false;
 }
 
-void damage_player(Player *player, uint8_t damage) {
-    bool immune = player->statuses[STATUS_PHANTOM];
+DamageStatus damage_player(Player *player, uint8_t damage) {
+    DamageStatus status = DAMAGE_HIT;
+
+    if (player->statuses[STATUS_PHANTOM]) {
+        status = DAMAGE_BLOCK;
+    }
 
     if (player->statuses[STATUS_LEECH]) {
         player->hp = min(player->hp + damage, MAX_PLAYER_HEALTH);
         player->statuses[STATUS_LEECH]--;
-        immune = true;
+        status = DAMAGE_HEAL;
     }
 
     if (player->statuses[STATUS_REFLECT]) {
         player->statuses[STATUS_REFLECT]--;
-        immune = true;
+        status = DAMAGE_REFLECT;
     }
 
-    if (!immune) {
+    if (status == DAMAGE_HIT) {
         if (damage >= player->hp) player->hp = 0;
         else player->hp -= damage;
     }
+
+    return status;
 }
