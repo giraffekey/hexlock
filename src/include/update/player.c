@@ -1,147 +1,188 @@
 #include "player.h"
 
+/**
+ * Sets player's current action
+ * 
+ * @param player The current state of the player
+ * @param action The action to be set
+ * @param cooldown The amount of ticks the action will take
+ */
+static void set_player_action(Player *player, ActionU8 action, uint8_t cooldown) {
+    player->action = action;
+    player->cooldown = cooldown;
+    player->t_rate = (float)cooldown;
+}
+
+/**
+ * Sets player's next action
+ * 
+ * @param player The current state of the player
+ * @param action The action to be set
+ * @param cooldown The amount of ticks the action will take
+ */
+static void set_next_player_action(Player *player, ActionU8 action, uint8_t cooldown) {
+    player->next_action = action;
+    player->next_cooldown = cooldown;
+    player->next_t_rate = (float)cooldown;
+}
+
+/**
+ * Updates player action in response to keyboard, gamepad, mouse, and touch input
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ */
 void handle_input(Player *player, const Grid grid) {
-    bool is_key_prev_pressed = IsKeyPressed(KEY_TAB) && IsKeyDown(KEY_LEFT_SHIFT);
-    bool is_gamepad_prev_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2);
-    if (is_key_prev_pressed || is_gamepad_prev_pressed) {
+    bool is_key_pressed, is_gamepad_pressed;
+
+    /* Handle input for previous hex selection */
+
+    is_key_pressed = IsKeyPressed(KEY_TAB) && IsKeyDown(KEY_LEFT_SHIFT);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->n_hexes > 0) {
             player->selected = (player->selected + player->n_hexes - 1) % player->n_hexes;
         }
     }
 
-    bool is_key_next_pressed = IsKeyPressed(KEY_C) || IsKeyPressed(KEY_TAB) && !IsKeyDown(KEY_LEFT_SHIFT);
-    bool is_gamepad_next_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_2);
-    if (is_key_next_pressed || is_gamepad_next_pressed) {
+    /* Handle input for next hex selection */
+
+    is_key_pressed = IsKeyPressed(KEY_C) || IsKeyPressed(KEY_TAB) && !IsKeyDown(KEY_LEFT_SHIFT);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_2);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->n_hexes > 0) {
             player->selected = (player->selected + 1) % player->n_hexes;
         }
     }
 
+    // Only up to two actions can be queued
     if (player->cooldown > 0 && player->next_action != ACTION_WAIT) return;
 
-    bool is_key_left_pressed = IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A);
-    bool is_gamepad_left_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT);
-    if (is_key_left_pressed || is_gamepad_left_pressed) {
+    /* Handle input for move left action */
+
+    is_key_pressed = IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x - 1 - (player->action == ACTION_LEFT), player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->next_action = ACTION_LEFT;
-                player->next_cooldown = player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2;
-                player->next_t_rate = (float)player->next_cooldown;
+                set_next_player_action(player, ACTION_LEFT, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
             Position next_pos = {player->pos.x - 1, player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->action = ACTION_LEFT;
-                player->cooldown = player->statuses[STATUS_MOVE_FAST] ? 1 : 2;
-                player->t_rate = (float)player->cooldown;
+                set_player_action(player, ACTION_LEFT, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
             }
         }
     }
 
-    bool is_gamepad_right_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT);
-    if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D) || is_gamepad_right_pressed) {
+    /* Handle input for move right action */
+
+    is_key_pressed = IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x + 1 + (player->action == ACTION_RIGHT), player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->next_action = ACTION_RIGHT;
-                player->next_cooldown = player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2;
-                player->next_t_rate = (float)player->next_cooldown;
+                set_next_player_action(player, ACTION_RIGHT, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
             Position next_pos = {player->pos.x + 1, player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->action = ACTION_RIGHT;
-                player->cooldown = player->statuses[STATUS_MOVE_FAST] ? 1 : 2;
-                player->t_rate = (float)player->cooldown;
+                set_player_action(player, ACTION_RIGHT, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
             }
         }
     }
 
-    bool is_gamepad_up_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP);
-    if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || is_gamepad_up_pressed) {
+    /* Handle input for move up action */
+
+    is_key_pressed = IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x, player->pos.y - 1 - (player->action == ACTION_UP)};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->next_action = ACTION_UP;
-                player->next_cooldown = player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2;
-                player->next_t_rate = (float)player->next_cooldown;
+                set_next_player_action(player, ACTION_UP, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
             Position next_pos = {player->pos.x, player->pos.y - 1};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->action = ACTION_UP;
-                player->cooldown = player->statuses[STATUS_MOVE_FAST] ? 1 : 2;
-                player->t_rate = (float)player->cooldown;
+                set_player_action(player, ACTION_UP, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
             }
         }
     }
 
-    bool is_gamepad_down_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
-    if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S) || is_gamepad_down_pressed) {
+    /* Handle input for move down action */
+
+    is_key_pressed = IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x, player->pos.y + 1 + (player->action == ACTION_DOWN)};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->next_action = ACTION_DOWN;
-                player->next_cooldown = player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2;
-                player->next_t_rate = (float)player->next_cooldown;
+                set_next_player_action(player, ACTION_DOWN, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
             Position next_pos = {player->pos.x, player->pos.y + 1};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
-                player->action = ACTION_DOWN;
-                player->cooldown = player->statuses[STATUS_MOVE_FAST] ? 1 : 2;
-                player->t_rate = (float)player->cooldown;
+                set_player_action(player, ACTION_DOWN, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
             }
         }
     }
 
-    bool is_gamepad_missile_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT);
-    if (IsKeyPressed(KEY_Z) || IsKeyPressed(KEY_SPACE) || is_gamepad_missile_pressed) {
+    /* Handle input for cast missile action */
+
+    is_key_pressed = IsKeyPressed(KEY_Z) || IsKeyPressed(KEY_SPACE);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->missile_delay == 0) {
             if (player->cooldown > 0) {
-                player->next_action = ACTION_MISSILE;
-                player->next_cooldown = player->statuses[STATUS_CAST_FAST] > 1 ? 1 : 2;
-                player->next_t_rate = (float)player->next_cooldown;
+                set_next_player_action(player, ACTION_MISSILE, player->statuses[STATUS_CAST_FAST] > 1 ? 1 : 2);
                 return;
             } else {
-                player->action = ACTION_MISSILE;
-                player->cooldown = player->statuses[STATUS_CAST_FAST] ? 1 : 2;
-                player->t_rate = (float)player->cooldown;
+                set_player_action(player, ACTION_MISSILE, player->statuses[STATUS_CAST_FAST] ? 1 : 2);
                 player->missile_delay = player->statuses[STATUS_CAST_FAST] ? 2 : 4;
                 return;
             }
         }
     }
 
-    bool is_gamepad_hex_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP);
-    if (IsKeyPressed(KEY_X) || IsKeyPressed(KEY_F) || is_gamepad_hex_pressed) {
+    /* Handle input for cast hex action */
+
+    is_key_pressed = IsKeyPressed(KEY_X) || IsKeyPressed(KEY_F);
+    is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP);
+    if (is_key_pressed || is_gamepad_pressed) {
         if (player->hexes[0].valid) {
             if (player->cooldown > 0) {
                 if (player->action != ACTION_HEX) {
-                    player->next_action = ACTION_HEX;
-                    player->next_cooldown = player->statuses[STATUS_CAST_FAST] > 1 ? 1 : 2;
-                    player->next_t_rate = (float)player->next_cooldown;
+                    set_next_player_action(player, ACTION_HEX, player->statuses[STATUS_CAST_FAST] > 1 ? 1 : 2);
                     return;
                 }
             } else {
-                player->action = ACTION_HEX;
-                player->cooldown = player->statuses[STATUS_CAST_FAST] ? 1 : 2;
-                player->t_rate = (float)player->cooldown;
+                set_player_action(player, ACTION_HEX, player->statuses[STATUS_CAST_FAST] ? 1 : 2);
                 return;
             }
         }
     }
 }
 
+/**
+ * Move the player based on their current action
+ * 
+ * @param player The current state of the player
+ * @param glyphs The current state of the arena's glyphs
+ * @param enemies The current state of the arena's enemies
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
     switch (player->action) {
     case ACTION_LEFT:
@@ -158,11 +199,19 @@ static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet 
         break;
     }
 
+    // Check for collisions after movement
     check_player_glyph_collision(player, glyphs, sounds);
     check_player_enemy_collision(player, enemies, bullets, sounds);
     check_player_bullet_collision(player, bullets, sounds);
 }
 
+/**
+ * Push the enemy back if their current space is occupied
+ * 
+ * @param from The position being checked
+ * @param grid The current state of the arena's tiles
+ * @param enemies The current state of the arena's enemies
+ */
 static void push_enemy(Position from, const Grid grid, Enemy enemies[]) {
     bool is_used[18] = {0};
 
@@ -182,30 +231,58 @@ static void push_enemy(Position from, const Grid grid, Enemy enemies[]) {
         Enemy *enemy = &enemies[i];
         if (enemy->exists && is_pos_eq(enemy->pos, from)) {
             if (enemy->pos.x == N_COLS - 1) {
+                // Kill the enemy if they are in the last column
                 enemy->exists = false;
+                // TODO: Play death animation
             } else {
                 Position behind = {enemy->pos.x + 1, enemy->pos.y};
                 if (is_used[behind.y * 6 + behind.x]) {
+                    // Kill the enemy if no space behind them exists
                     enemy->exists = false;
+                    // TODO: Play death animation
                 } else {
+                    // Otherwise, move them to the space behind
                     enemy->pos = behind;
                     if (enemy->type == FLUFFY) enemy->data.fluffy.origin = behind;
+                    // TODO: Play push animation
                 }
             }
         }
     }
 }
 
+/**
+ * Casts Aries hex - Spawn fire wave that hits neighbors in a V shape
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_aries(const Player *player, Bullet bullets[], const Sounds *sounds) {
     spawn_bullet(bullets, player->pos, BULLET_FIRE_WAVE, true);
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts AriesΩ hex - Spawn fire blast that hits neighbors in an X shape
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_aries_omega(const Player *player, Bullet bullets[], const Sounds *sounds) {
     spawn_bullet(bullets, player->pos, BULLET_FIRE_BLAST, true);
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts Taurus hex - Place a rock in front of player that reflects bullets
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param enemies The current state of the arena's enemies
+ * @param sounds The available sound effects to be played
+ */
 static void cast_taurus(const Player *player, Grid grid, Enemy enemies[], const Sounds *sounds) {
     Position pos = {player->pos.x + 1, player->pos.y};
     set_tile(grid, pos, TILE_ROCK, 10);
@@ -213,6 +290,14 @@ static void cast_taurus(const Player *player, Grid grid, Enemy enemies[], const 
     PlaySound(sounds->place);
 }
 
+/**
+ * Casts TaurusΩ hex - Place a crystal in front of player that reflects bullets
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param enemies The current state of the arena's enemies
+ * @param sounds The available sound effects to be played
+ */
 static void cast_taurus_omega(const Player *player, Grid grid, Enemy enemies[], const Sounds *sounds) {
     Position pos = {player->pos.x + 1, player->pos.y};
     set_tile(grid, pos, TILE_CRYSTAL, 15);
@@ -220,17 +305,36 @@ static void cast_taurus_omega(const Player *player, Grid grid, Enemy enemies[], 
     PlaySound(sounds->place);
 }
 
+/**
+ * Casts Gemini hex - Move faster for 50 ticks
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_gemini(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_MOVE_FAST] += 50;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts GeminiΩ hex - Move and cast faster for 100 ticks
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_gemini_omega(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_MOVE_FAST] += 100;
     player->statuses[STATUS_CAST_FAST] += 100;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts Cancer hex - Spawn whirlpool for 3 ticks that damages four neighbors
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_cancer(const Player *player, Bullet bullets[], const Sounds *sounds) {
     BulletData data;
     data.whirlpool.is_moving = true;
@@ -240,6 +344,13 @@ static void cast_cancer(const Player *player, Bullet bullets[], const Sounds *so
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts CancerΩ hex - Spawn hurricane for 5 ticks that damages eight neighbors
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_cancer_omega(const Player *player, Bullet bullets[], const Sounds *sounds) {
     BulletData data;
     data.whirlpool.is_moving = true;
@@ -249,16 +360,36 @@ static void cast_cancer_omega(const Player *player, Bullet bullets[], const Soun
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts Leo hex - For the next 50 ticks, spawn fireball when player is hit
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_leo(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_FIRE_CLOAK] += 50;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts LeoΩ hex - For the next 100 ticks, spawn wildfire when player is hit
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_leo_omega(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_WILDFIRE_CLOAK] += 100;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts Virgo hex - Claim the closest tile as a player tile
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param enemies The current state of the arena's enemies
+ * @param sounds The available sound effects to be played
+ */
 static void cast_virgo(const Player *player, Grid grid, Enemy enemies[], const Sounds *sounds) {
     for (uint8_t x = player->pos.x; x < N_COLS; ++x) {
         Tile *tile = &grid[player->pos.y][x];
@@ -271,6 +402,14 @@ static void cast_virgo(const Player *player, Grid grid, Enemy enemies[], const S
     PlaySound(sounds->advance);
 }
 
+/**
+ * Casts VirgoΩ hex - Claim the next column as player tiles
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param enemies The current state of the arena's enemies
+ * @param sounds The available sound effects to be played
+ */
 static void cast_virgo_omega(const Player *player, Grid grid, Enemy enemies[], const Sounds *sounds) {
     for (uint8_t x = player->pos.x; x < N_COLS; ++x) {
         bool is_player_col = true;
@@ -293,6 +432,13 @@ static void cast_virgo_omega(const Player *player, Grid grid, Enemy enemies[], c
     PlaySound(sounds->advance);
 }
 
+/**
+ * Casts Libra hex - Spawn one diagonally moving twister
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_libra(const Player *player, Bullet bullets[], const Sounds *sounds) {
     Position pos = {player->pos.x, 1};
     BulletData data;
@@ -302,6 +448,13 @@ static void cast_libra(const Player *player, Bullet bullets[], const Sounds *sou
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts LibraΩ hex - Spawn two diagonally moving twisters
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_libra_omega(const Player *player, Bullet bullets[], const Sounds *sounds) {
     Position pos = {player->pos.x, 1};
     BulletData data;
@@ -313,23 +466,49 @@ static void cast_libra_omega(const Player *player, Bullet bullets[], const Sound
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts Scorpio hex - Heal from next attack
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_scorpio(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_LEECH] += 1;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts ScorpioΩ hex - Heal from and reflect next attack
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_scorpio_omega(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_LEECH] += 1;
     player->statuses[STATUS_REFLECT] += 1;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts Sagittarius hex - Place magma 3 tiles ahead
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param sounds The available sound effects to be played
+ */
 static void cast_sagittarius(const Player *player, Grid grid, const Sounds *sounds) {
     Position pos = {player->pos.x + 3, player->pos.y};
     set_tile(grid, pos, TILE_MAGMA, 0);
     PlaySound(sounds->place);
 }
 
+/**
+ * Casts SagittariusΩ hex - Fill enemy row with magma
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param sounds The available sound effects to be played
+ */
 static void cast_sagittarius_omega(const Player *player, Grid grid, const Sounds *sounds) {
     for (uint8_t x = N_COLS / 2; x < N_COLS; ++x) {
         Position pos = {x, player->pos.y};
@@ -338,11 +517,25 @@ static void cast_sagittarius_omega(const Player *player, Grid grid, const Sounds
     PlaySound(sounds->place);
 }
 
+/**
+ * Casts Capricorn hex - Spawn shockwave in one row
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_capricorn(const Player *player, Bullet bullets[], const Sounds *sounds) {
     spawn_bullet(bullets, player->pos, BULLET_SHOCKWAVE, true);
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts CapricornΩ hex - Spawn shockwave in all rows
+ * 
+ * @param player The current state of the player
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_capricorn_omega(const Player *player, Bullet bullets[], const Sounds *sounds) {
     spawn_bullet(bullets, (Position){player->pos.x, 0}, BULLET_SHOCKWAVE, true);
     spawn_bullet(bullets, (Position){player->pos.x, 1}, BULLET_SHOCKWAVE, true);
@@ -350,26 +543,59 @@ static void cast_capricorn_omega(const Player *player, Bullet bullets[], const S
     PlaySound(sounds->special);
 }
 
+/**
+ * Casts Aquarius hex - Become phantom for 30 ticks
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_aquarius(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_PHANTOM] += 30;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts AquariusΩ hex - Become phantom for 50 ticks
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_aquarius_omega(Player *player, const Sounds *sounds) {
     player->statuses[STATUS_PHANTOM] += 50;
     PlaySound(sounds->power);
 }
 
+/**
+ * Casts Pisces hex - Heal player 1 HP
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_pisces(Player *player, const Sounds *sounds) {
     player->hp = min(player->hp + 1, MAX_PLAYER_HEALTH);
     PlaySound(sounds->heal);
 }
 
+/**
+ * Casts PiscesΩ hex - Heal player to full HP
+ * 
+ * @param player The current state of the player
+ * @param sounds The available sound effects to be played
+ */
 static void cast_pisces_omega(Player *player, const Sounds *sounds) {
     player->hp = MAX_PLAYER_HEALTH;
     PlaySound(sounds->heal);
 }
 
+/**
+ * Casts the currently selected hex
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param enemies The current state of the arena's enemies
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 static void cast_hex(Player *player, Grid grid, Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
     Hex hex = player->hexes[player->selected];
     if (hex.valid) {
@@ -451,6 +677,16 @@ static void cast_hex(Player *player, Grid grid, Enemy enemies[], Bullet bullets[
     use_hex(player);
 }
 
+/**
+ * Updates player every tick
+ * 
+ * @param player The current state of the player
+ * @param grid The current state of the arena's tiles
+ * @param glyphs The current state of the arena's glyphs
+ * @param enemies The current state of the arena's enemies
+ * @param bullets The current state of the arena's bullets
+ * @param sounds The available sound effects to be played
+ */
 void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
     if (player->cooldown > 0) player->cooldown--;
 
@@ -512,6 +748,13 @@ void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], B
     }
 }
 
+/**
+ * Updates the ID of the enemy whose health is currently being displayed
+ * 
+ * @param target_enemy The enemy ID to be changed
+ * @param player The current state of the player
+ * @param enemies The current state of the arena's enemies
+ */
 void update_target_enemy(size_t *target_enemy, const Player *player, const Enemy enemies[]) {
     uint8_t min_x = N_COLS;
     for (size_t i = 0; i < MAX_ENEMIES; ++i) {
@@ -523,6 +766,12 @@ void update_target_enemy(size_t *target_enemy, const Player *player, const Enemy
     }
 }
 
+/**
+ * Updates the player's time value each frame, used for lerp and animations
+ * 
+ * @param player The current state of the player
+ * @param dt The delta time since last frame
+ */
 void update_player_time(Player *player, float dt) {
     player->t = min(player->t + dt / TICK_RATE / player->t_rate, 1.0f);
 }
