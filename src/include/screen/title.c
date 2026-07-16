@@ -2,7 +2,7 @@
 
 void load_title_assets(TitleAssets *a) {
     a->background = LoadTexture("resources/backgrounds/title.png");
-    a->music = LoadMusicStream("resources/music/title.wav");
+    a->music = LoadMusicStream("resources/music/title.ogg");
 }
 
 void unload_title_assets(TitleAssets *a) {

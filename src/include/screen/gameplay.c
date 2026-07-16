@@ -92,7 +92,7 @@ void load_gameplay_assets(GameplayAssets *a) {
     a->enemies_sprite = LoadTexture("resources/sprites/enemies.png");
     a->bullets_sprite = LoadTexture("resources/sprites/bullets.png");
     a->status_sprite = LoadTexture("resources/sprites/status.png");
-    a->music = LoadMusicStream("resources/music/gameplay.wav");
+    a->music = LoadMusicStream("resources/music/gameplay.ogg");
 }
 
 void unload_gameplay_assets(GameplayAssets *a) {
