@@ -31,6 +31,15 @@ typedef struct {
 
 typedef Tile Grid[N_ROWS][N_COLS];
 
+typedef enum {
+    FIRE,
+    WATER,
+    EARTH,
+    AIR,
+} Element;
+
+typedef uint8_t ElementU8;
+
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \
 __typeof__ (b) _b = (b); \

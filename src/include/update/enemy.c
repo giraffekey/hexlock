@@ -360,7 +360,7 @@ static void return_enemy(Enemy *enemy) {
 
 static void melee_attack(Enemy *enemy, Player *player, Bullet bullets[], const Sounds *sounds) {
     Position attack_pos = {enemy->pos.x - 1, enemy->pos.y};
-    if (is_pos_eq(player->pos, attack_pos)) on_player_enemy_collision(player, enemy, bullets, sounds);
+    if (is_pos_eq(player->pos, attack_pos)) on_player_enemy_collision(player, enemy, true, bullets, sounds);
 }
 
 static void teleport_enemy(Enemy *enemy, const Grid grid, const Enemy enemies[], const Sounds *sounds) {
@@ -393,6 +393,9 @@ static void execute_enemy_plan(Enemy *enemy, size_t id, const Grid grid, const E
     EnemyStep step = current_step(enemy);
     switch (step.action) {
     case ENEMY_ACTION_WAIT:
+    case ENEMY_ACTION_SPAWN:
+    case ENEMY_ACTION_HIT:
+    case ENEMY_ACTION_DEATH:
         break;
     case ENEMY_ACTION_LEFT:
     case ENEMY_ACTION_RIGHT:
@@ -437,7 +440,7 @@ static void execute_enemy_plan(Enemy *enemy, size_t id, const Grid grid, const E
         teleport_to_player(enemy, grid, player, sounds);
         break;
     }
-    enemy->plan.index++;
+    if (current_action(enemy) == step.action) enemy->plan.index++;
 }
 
 static bool next_pos_taken(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[]) {
@@ -475,7 +478,14 @@ static bool next_pos_taken(Enemy *enemy, size_t id, const Grid grid, const Enemy
 static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[], const Sounds *sounds) {
     if (enemy->cooldown > 0) enemy->cooldown--;
 
+    if (enemy->hit > 0) enemy->hit--;
+
     if (enemy->cooldown == 0) {
+        if (is_enemy_dead(enemy)) {
+            enemy->exists = false;
+            return;
+        }
+
         if (enemy->type == FLUFFY) {
             bool *is_moving_up = &enemy->data.fluffy.is_moving_up;
             if (*is_moving_up && enemy->pos.y == 0) *is_moving_up = false;
@@ -501,8 +511,9 @@ static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy e
         if (enemy->magma_cooldown > 0) enemy->magma_cooldown--;
         if (enemy->magma_cooldown == 0) {
             enemy->hp--;
-            if (enemy->hp == 0) enemy->exists = false;
+            if (enemy->hp == 0) kill_enemy(enemy);
             enemy->magma_cooldown = 4;
+            hit_enemy(enemy);
             PlaySound(sounds->hit);
         }
     } else {

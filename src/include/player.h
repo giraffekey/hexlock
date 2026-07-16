@@ -9,6 +9,7 @@
 
 typedef enum {
     ACTION_WAIT,
+    ACTION_HIT,
     ACTION_LEFT,
     ACTION_RIGHT,
     ACTION_UP,
@@ -54,6 +55,7 @@ typedef struct {
     float next_t_rate;
     uint8_t wait_frame;
     uint8_t missile_delay;
+    uint8_t hit;
     uint8_t magma_cooldown;
     uint8_t hp;
     SignU8 signs[MAX_SIGNS];

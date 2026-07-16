@@ -127,6 +127,7 @@ DamageStatus damage_player(Player *player, uint8_t damage) {
     if (status == DAMAGE_HIT) {
         if (damage >= player->hp) player->hp = 0;
         else player->hp -= damage;
+        player->hit = 2;
     }
 
     return status;

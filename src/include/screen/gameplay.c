@@ -170,7 +170,7 @@ static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_scr
             *next_screen = SCREEN_WIN;
             PlaySound(sounds->win);
         }
-        
+
         if (s->time_limit > 0) s->time_limit--;
     }
 }
@@ -184,7 +184,7 @@ void update_gameplay(GameplayState *s, const Sounds *sounds, Screen *next_screen
     s->tick -= dt;
     if (s->tick <= 0.0f) {
         update_tick(s, sounds, next_screen);
-        s->tick += TICK_RATE;
+        s->tick = TICK_RATE;
     }
 }
 
@@ -248,20 +248,24 @@ static void draw_player(const Player *player, Texture2D sprite) {
     }
 
     int frame;
-    switch (player->action) {
-    case ACTION_WAIT:
-        frame = player->wait_frame / 2;
-        break;
-    case ACTION_LEFT:
-    case ACTION_RIGHT:
-    case ACTION_UP:
-    case ACTION_DOWN:
-        frame = 2 + min((int)(player->t * 2.0f), 1);
-        break;
-    case ACTION_MISSILE:
-    case ACTION_HEX:
-        frame = 4 + min((int)(player->t * 2.0f), 1);
-        break;
+    if (player->hit) {
+        frame = 6 + player->hit % 2;
+    } else {
+        switch (player->action) {
+        case ACTION_WAIT:
+            frame = player->wait_frame / 2;
+            break;
+        case ACTION_LEFT:
+        case ACTION_RIGHT:
+        case ACTION_UP:
+        case ACTION_DOWN:
+            frame = 2 + min((int)(player->t * 2.0f), 1);
+            break;
+        case ACTION_MISSILE:
+        case ACTION_HEX:
+            frame = 4 + min((int)(player->t * 2.0f), 1);
+            break;
+        }
     }
 
     Rectangle src = {frame * 16, 0, 16, 16};
@@ -307,96 +311,7 @@ static void draw_enemies(const Enemy enemies[], Texture2D sprite) {
                 break;
             }
 
-            int frame;
-            switch (enemy->type) {
-            case PIXIE:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_POWDER:
-			        frame = 2 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	}
-            	break;
-            case WISP:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_TELEPORT:
-            	case ENEMY_ACTION_TELEPORT_TO_PLAYER:
-			        frame = 2 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	case ENEMY_ACTION_MELEE_ATTACK:
-			        frame = 4 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	}
-            	break;
-            case SCARAB:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_LEFT:
-            	case ENEMY_ACTION_RIGHT:
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_SPIN:
-			        frame = 2 + (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	}
-            	break;
-            case FLUFFY:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-                case ENEMY_ACTION_REVERSE:
-                    frame = (int)(enemy->t * enemy->t_rate) % 2;
-			        break;
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-			        frame = 2 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	case ENEMY_ACTION_LEFT:
-                    frame = 4 + (enemy->data.fluffy.origin.x - enemy->pos.x) % 2;
-            		break;
-            	case ENEMY_ACTION_RETURN:
-            		frame = 6;
-            		break;
-            	}
-            	break;
-            case MOLE:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-			        break;
-			    case ENEMY_ACTION_HIDE:
-			    case ENEMY_ACTION_REVEAL:
-			    	frame = 2;
-			    	break;
-            	case ENEMY_ACTION_PELLET:
-			        frame = 3 + (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_LEFT:
-            	case ENEMY_ACTION_RIGHT:
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-            		frame = 5;
-            		break;
-            	}
-            	break;
-            case VENUS:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-            		frame = 0;
-			        break;
-            	case ENEMY_ACTION_SPINY:
-			        frame = 1 + (int)(enemy->t * enemy->t_rate) % 2;
-			        break;
-            	}
-            	break;
-            }
+            int frame = current_enemy_frame(enemy);
 
 		    Rectangle src = {frame * 16, enemy->type * 16, 16, 16};
             switch (enemy->type) {

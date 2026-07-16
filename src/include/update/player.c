@@ -692,6 +692,8 @@ void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], B
 
     if (player->missile_delay > 0) player->missile_delay--;
 
+    if (player->hit > 0) player->hit--;
+
     if (player->cooldown == 0) {
         switch (player->action) {
         case ACTION_WAIT:
