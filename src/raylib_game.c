@@ -158,8 +158,21 @@ void update(State *s) {
 
     if (next_screen != s->screen) {
         unload_screen(s);
+
+        if (s->screen == SCREEN_GAMEPLAY && next_screen == SCREEN_WIN) {
+            uint16_t score = s->screen_state.gameplay.score;
+            memset(&s->screen_state, 0, sizeof(ScreenState));
+            s->screen_state.win.score = score;
+        } else if (s->screen == SCREEN_GAMEPLAY && next_screen == SCREEN_DEATH) {
+            uint16_t score = s->screen_state.gameplay.score;
+            memset(&s->screen_state, 0, sizeof(ScreenState));
+            s->screen_state.death.score = score;
+        } else {
+            memset(&s->screen_state, 0, sizeof(ScreenState));
+        }
+
         s->screen = next_screen;
-        memset(&s->screen_state, 0, sizeof(ScreenState));
+
         load_screen(s);
     }
 }

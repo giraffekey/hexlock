@@ -1,6 +1,8 @@
 #ifndef SCREEN_DEATH_H
 #define SCREEN_DEATH_H
 
+#include <stdint.h>
+
 #include "raylib.h"
 
 #include "types.h"
@@ -9,7 +11,9 @@ typedef struct {
     Texture2D background;
 } DeathAssets;
 
-typedef struct {} DeathState;
+typedef struct {
+    uint16_t score;
+} DeathState;
 
 void load_death_assets(DeathAssets *a);
 

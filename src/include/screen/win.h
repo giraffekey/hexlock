@@ -1,6 +1,8 @@
 #ifndef SCREEN_WIN_H
 #define SCREEN_WIN_H
 
+#include <stdint.h>
+
 #include "raylib.h"
 
 #include "types.h"
@@ -9,7 +11,9 @@ typedef struct {
     Texture2D background;
 } WinAssets;
 
-typedef struct {} WinState;
+typedef struct {
+    uint16_t score;
+} WinState;
 
 void load_win_assets(WinAssets *a);
 

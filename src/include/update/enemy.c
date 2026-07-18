@@ -475,13 +475,14 @@ static bool next_pos_taken(Enemy *enemy, size_t id, const Grid grid, const Enemy
     return false;
 }
 
-static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[], const Sounds *sounds) {
+static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy enemies[], Player *player, Bullet bullets[], uint16_t *score, const Sounds *sounds) {
     if (enemy->cooldown > 0) enemy->cooldown--;
 
     if (enemy->hit > 0) enemy->hit--;
 
     if (enemy->cooldown == 0) {
         if (is_enemy_dead(enemy)) {
+            *score += ENEMY_SCORES[enemy->type];
             enemy->exists = false;
             return;
         }
@@ -521,10 +522,10 @@ static void update_enemy(Enemy *enemy, size_t id, const Grid grid, const Enemy e
     }
 }
 
-void update_enemies(Enemy enemies[], const Grid grid, Player *player, Bullet bullets[], const Sounds *sounds) {
+void update_enemies(Enemy enemies[], const Grid grid, Player *player, Bullet bullets[], uint16_t *score, const Sounds *sounds) {
     for (size_t i = 0; i < MAX_ENEMIES; ++i) {
         Enemy *enemy = &enemies[i];
-        if (enemy->exists) update_enemy(enemy, i, grid, enemies, player, bullets, sounds);
+        if (enemy->exists) update_enemy(enemy, i, grid, enemies, player, bullets, score, sounds);
     }
 }
 

@@ -18,17 +18,27 @@ void update_death(DeathState *s, Screen *next_screen) {
     }
 }
 
+static void draw_death_text() {
+    const char *text = "DEATH";
+    int width = MeasureText(text, 20);
+    DrawText(text, 90 - width / 2, 50, 20, WHITE);
+}
+
+static void draw_score(uint16_t score) {
+    const char *text = TextFormat("Your Score: %d", score);
+    int width = MeasureText(text, 10);
+    DrawText(text, 90 - width / 2, 80, 10, WHITE);
+}
+
+static void draw_restart_text() {
+    const char *text = "Press Enter to Restart";
+    int width = MeasureText(text, 10);
+    DrawText(text, 90 - width / 2, 100, 10, WHITE);
+}
+
 void draw_death(const DeathState *s, const DeathAssets *a) {
 	DrawTexture(a->background, 0, 0, WHITE);
-
-	char *text;
-	int width;
-
-    text = "DEATH";
-    width = MeasureText(text, 20);
-    DrawText(text, 90 - width / 2, 60, 20, WHITE);
-
-    text = "Press Enter to Restart";
-    width = MeasureText(text, 10);
-    DrawText(text, 90 - width / 2, 100, 10, WHITE);
+    draw_death_text();
+    draw_score(s->score);
+    draw_restart_text();
 }

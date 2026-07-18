@@ -72,12 +72,13 @@ static bool update_wave(GameplayState *s) {
 		}
 	}
 
-	if (is_clear) {
+	if (is_clear) {        
+        s->score += (TIME_LIMIT - s->time_limit) / 10 * 5;
         s->wave++;
 		if (s->wave == N_WAVES) {
             return true;
 		} else {
-			s->countdown = 30;
+			s->countdown = COUNTDOWN;
 			s->is_clear = true;
 		}
 	}
@@ -127,7 +128,7 @@ void load_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
     s->player.next_t_rate = 2.0f;
     s->player.hp = MAX_PLAYER_HEALTH;
 
-    s->countdown = 30;
+    s->countdown = COUNTDOWN;
     s->time_limit = TIME_LIMIT;
     s->is_clear = true;
 
@@ -148,7 +149,7 @@ static void update_time(GameplayState *s, float dt) {
 static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_screen) {
     update_glyphs(s->glyphs);
     update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets, sounds);
-    update_enemies(s->enemies, s->grid, &s->player, s->bullets, sounds);
+    update_enemies(s->enemies, s->grid, &s->player, s->bullets, &s->score, sounds);
     update_bullets(s->bullets, s->grid, &s->player, s->enemies, sounds);
     update_glyph_spawner(&s->glyph_spawner, s->glyphs, s->wave, s->grid, &s->player);
     update_target_enemy(&s->target_enemy, &s->player, s->enemies);
@@ -477,6 +478,11 @@ static void draw_wave(uint8_t wave) {
     DrawText(text, 90 - width / 2, 8, 10, WHITE);
 }
 
+static void draw_score(uint16_t score) {
+    const char *text = TextFormat("%d", score);
+    DrawText(text, 10, 8, 10, WHITE);
+}
+
 static void draw_time_limit(uint16_t time_limit) {
     const char *text = TextFormat("%d", time_limit);
     DrawText(text, 160, 8, 10, WHITE);
@@ -506,6 +512,7 @@ void draw_gameplay(const GameplayState *s, const GameplayAssets *a) {
     if (target->exists) draw_enemy_hp(target->hp, MAX_ENEMY_HEALTH[target->type], a->status_sprite);
 
     draw_wave(s->wave + 1);
+    draw_score(s->score);
     if (s->countdown > 0) draw_countdown((s->countdown + 9) / 10);
     else draw_time_limit(s->time_limit / 10);
 }

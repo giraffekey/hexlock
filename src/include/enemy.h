@@ -93,6 +93,8 @@ typedef struct {
 
 static const uint8_t MAX_ENEMY_HEALTH[N_ENEMIES] = {4, 3, 2, 6, 4, 6};
 
+static const uint16_t ENEMY_SCORES[N_ENEMIES] = {20, 30, 30, 10, 30, 10};
+
 void add_step(EnemyPlan *plan, EnemyActionU8 action, uint8_t cooldown);
 
 EnemyStep current_step(const Enemy *enemy);

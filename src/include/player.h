@@ -1,7 +1,7 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include <raymath.h>
+#include "raymath.h"
 
 #include "util.h"
 #include "glyph.h"

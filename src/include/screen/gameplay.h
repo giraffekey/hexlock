@@ -15,6 +15,7 @@
 
 #define N_WAVES 20
 #define TIME_LIMIT 300
+#define COUNTDOWN 30
 
 typedef struct {
     Texture2D background;
@@ -38,6 +39,7 @@ typedef struct {
     uint8_t wave;
     uint8_t countdown;
     uint16_t time_limit;
+    uint16_t score;
     bool is_clear;
     size_t target_enemy;
 } GameplayState;
