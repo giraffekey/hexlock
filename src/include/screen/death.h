@@ -6,6 +6,7 @@
 #include "raylib.h"
 
 #include "types.h"
+#include "../storage.h"
 
 typedef struct {
     Texture2D background;
@@ -13,6 +14,7 @@ typedef struct {
 
 typedef struct {
     uint16_t score;
+    uint16_t high_score;
 } DeathState;
 
 void load_death_assets(DeathAssets *a);
