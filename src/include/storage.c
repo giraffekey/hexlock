@@ -1,5 +1,10 @@
 #include "storage.h"
 
+/**
+ * Loads data file and parses it into a struct
+ * 
+ * @return The storage data
+ */
 StorageData load_data() {
 	StorageData data = {0};
 
@@ -13,6 +18,11 @@ StorageData load_data() {
 	return data;
 }
 
+/**
+ * Saves data to the data file
+ * 
+ * @param data The storage data
+ */
 void save_data(StorageData *data) {
 	SaveFileData(STORAGE_DATA_FILE, data, sizeof(StorageData));
 }
