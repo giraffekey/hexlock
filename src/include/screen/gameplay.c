@@ -131,10 +131,6 @@ void load_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
     s->time_limit = TIME_LIMIT;
     s->is_clear = true;
 
-    s->grid[1][3].is_player = true;
-    s->grid[1][4].is_player = true;
-    s->grid[2][4].is_player = true;
-
     PlayMusicStream(a->music);
 }
 
