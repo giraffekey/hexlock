@@ -21,7 +21,11 @@ void unload_title_screen(TitleState *s, const TitleAssets *a) {
 }
 
 void update_title(TitleState *s, Screen *next_screen) {
-    if (IsKeyPressed(KEY_ENTER) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT)) {
+    bool is_key_pressed = IsKeyPressed(KEY_ENTER);
+    bool is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_MIDDLE_RIGHT);
+    bool is_clicked = IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
+    bool is_tapped = GetGestureDetected() == GESTURE_TAP;
+    if (is_key_pressed || is_gamepad_pressed || is_clicked || is_tapped) {
         *next_screen = SCREEN_GAMEPLAY;
     }
 
