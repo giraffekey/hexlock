@@ -1,6 +1,23 @@
 #include "player.h"
 
 /**
+ * Get the next position of the player based on their action
+ * 
+ * @param pos The current position
+ * @param action The current action
+ */
+static Position get_next_position(Position pos, ActionU8 action) {
+    switch (action) {
+    case ACTION_LEFT: return (Position){pos.x - 1, pos.y};
+    case ACTION_RIGHT: return (Position){pos.x + 1, pos.y};
+    case ACTION_UP: return (Position){pos.x, pos.y - 1};
+    case ACTION_DOWN: return (Position){pos.x, pos.y + 1};
+    default: return pos;
+    }
+    return pos;
+}
+
+/**
  * Sets player's current action
  * 
  * @param player The current state of the player
@@ -137,13 +154,14 @@ void handle_input(Player *player, const Grid grid) {
 
     if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
-            Position next_pos = {player->pos.x - 1 - (player->action == ACTION_LEFT), player->pos.y};
+            Position to = get_next_position(player->pos, player->action);
+            Position next_pos = get_next_position(to, ACTION_LEFT);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_next_player_action(player, ACTION_LEFT, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
-            Position next_pos = {player->pos.x - 1, player->pos.y};
+            Position next_pos = get_next_position(player->pos, ACTION_LEFT);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_player_action(player, ACTION_LEFT, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
@@ -159,13 +177,14 @@ void handle_input(Player *player, const Grid grid) {
 
     if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
-            Position next_pos = {player->pos.x + 1 + (player->action == ACTION_RIGHT), player->pos.y};
+            Position to = get_next_position(player->pos, player->action);
+            Position next_pos = get_next_position(to, ACTION_RIGHT);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_next_player_action(player, ACTION_RIGHT, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
-            Position next_pos = {player->pos.x + 1, player->pos.y};
+            Position next_pos = get_next_position(player->pos, ACTION_RIGHT);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_player_action(player, ACTION_RIGHT, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
@@ -181,13 +200,14 @@ void handle_input(Player *player, const Grid grid) {
 
     if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
-            Position next_pos = {player->pos.x, player->pos.y - 1 - (player->action == ACTION_UP)};
+            Position to = get_next_position(player->pos, player->action);
+            Position next_pos = get_next_position(to, ACTION_UP);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_next_player_action(player, ACTION_UP, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
-            Position next_pos = {player->pos.x, player->pos.y - 1};
+            Position next_pos = get_next_position(player->pos, ACTION_UP);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_player_action(player, ACTION_UP, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
@@ -203,13 +223,14 @@ void handle_input(Player *player, const Grid grid) {
 
     if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
-            Position next_pos = {player->pos.x, player->pos.y + 1 + (player->action == ACTION_DOWN)};
+            Position to = get_next_position(player->pos, player->action);
+            Position next_pos = get_next_position(to, ACTION_DOWN);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_next_player_action(player, ACTION_DOWN, player->statuses[STATUS_MOVE_FAST] > 1 ? 1 : 2);
                 return;
             }
         } else {
-            Position next_pos = {player->pos.x, player->pos.y + 1};
+            Position next_pos = get_next_position(player->pos, ACTION_DOWN);
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
                 set_player_action(player, ACTION_DOWN, player->statuses[STATUS_MOVE_FAST] ? 1 : 2);
                 return;
