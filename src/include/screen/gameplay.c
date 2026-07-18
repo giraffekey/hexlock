@@ -72,12 +72,13 @@ static bool update_wave(GameplayState *s) {
 		}
 	}
 
-	if (is_clear) {
+	if (is_clear) {        
+        s->score += (TIME_LIMIT - s->time_limit) / 10 * 5;
         s->wave++;
 		if (s->wave == N_WAVES) {
             return true;
 		} else {
-			s->countdown = 30;
+			s->countdown = COUNTDOWN;
 			s->is_clear = true;
 		}
 	}
@@ -92,7 +93,7 @@ void load_gameplay_assets(GameplayAssets *a) {
     a->enemies_sprite = LoadTexture("resources/sprites/enemies.png");
     a->bullets_sprite = LoadTexture("resources/sprites/bullets.png");
     a->status_sprite = LoadTexture("resources/sprites/status.png");
-    a->music = LoadMusicStream("resources/music/gameplay.wav");
+    a->music = LoadMusicStream("resources/music/gameplay.ogg");
 }
 
 void unload_gameplay_assets(GameplayAssets *a) {
@@ -127,7 +128,7 @@ void load_gameplay_screen(GameplayState *s, const GameplayAssets *a) {
     s->player.next_t_rate = 2.0f;
     s->player.hp = MAX_PLAYER_HEALTH;
 
-    s->countdown = 30;
+    s->countdown = COUNTDOWN;
     s->time_limit = TIME_LIMIT;
     s->is_clear = true;
 
@@ -147,8 +148,8 @@ static void update_time(GameplayState *s, float dt) {
 
 static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_screen) {
     update_glyphs(s->glyphs);
-    update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets, sounds);
-    update_enemies(s->enemies, s->grid, &s->player, s->bullets, sounds);
+    update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets, &s->score, sounds);
+    update_enemies(s->enemies, s->grid, &s->player, s->bullets, &s->score, sounds);
     update_bullets(s->bullets, s->grid, &s->player, s->enemies, sounds);
     update_glyph_spawner(&s->glyph_spawner, s->glyphs, s->wave, s->grid, &s->player);
     update_target_enemy(&s->target_enemy, &s->player, s->enemies);
@@ -170,7 +171,7 @@ static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_scr
             *next_screen = SCREEN_WIN;
             PlaySound(sounds->win);
         }
-        
+
         if (s->time_limit > 0) s->time_limit--;
     }
 }
@@ -184,7 +185,7 @@ void update_gameplay(GameplayState *s, const Sounds *sounds, Screen *next_screen
     s->tick -= dt;
     if (s->tick <= 0.0f) {
         update_tick(s, sounds, next_screen);
-        s->tick += TICK_RATE;
+        s->tick = TICK_RATE;
     }
 }
 
@@ -248,20 +249,24 @@ static void draw_player(const Player *player, Texture2D sprite) {
     }
 
     int frame;
-    switch (player->action) {
-    case ACTION_WAIT:
-        frame = player->wait_frame / 2;
-        break;
-    case ACTION_LEFT:
-    case ACTION_RIGHT:
-    case ACTION_UP:
-    case ACTION_DOWN:
-        frame = 2 + min((int)(player->t * 2.0f), 1);
-        break;
-    case ACTION_MISSILE:
-    case ACTION_HEX:
-        frame = 4 + min((int)(player->t * 2.0f), 1);
-        break;
+    if (player->hit) {
+        frame = 6 + player->hit % 2;
+    } else {
+        switch (player->action) {
+        case ACTION_WAIT:
+            frame = player->wait_frame / 2;
+            break;
+        case ACTION_LEFT:
+        case ACTION_RIGHT:
+        case ACTION_UP:
+        case ACTION_DOWN:
+            frame = 2 + min((int)(player->t * 2.0f), 1);
+            break;
+        case ACTION_MISSILE:
+        case ACTION_HEX:
+            frame = 4 + min((int)(player->t * 2.0f), 1);
+            break;
+        }
     }
 
     Rectangle src = {frame * 16, 0, 16, 16};
@@ -307,96 +312,7 @@ static void draw_enemies(const Enemy enemies[], Texture2D sprite) {
                 break;
             }
 
-            int frame;
-            switch (enemy->type) {
-            case PIXIE:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_POWDER:
-			        frame = 2 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	}
-            	break;
-            case WISP:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_TELEPORT:
-            	case ENEMY_ACTION_TELEPORT_TO_PLAYER:
-			        frame = 2 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	case ENEMY_ACTION_MELEE_ATTACK:
-			        frame = 4 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	}
-            	break;
-            case SCARAB:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_LEFT:
-            	case ENEMY_ACTION_RIGHT:
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_SPIN:
-			        frame = 2 + (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	}
-            	break;
-            case FLUFFY:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-                case ENEMY_ACTION_REVERSE:
-                    frame = (int)(enemy->t * enemy->t_rate) % 2;
-			        break;
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-			        frame = 2 + min((int)(enemy->t * enemy->t_rate), 1);
-            		break;
-            	case ENEMY_ACTION_LEFT:
-                    frame = 4 + (enemy->data.fluffy.origin.x - enemy->pos.x) % 2;
-            		break;
-            	case ENEMY_ACTION_RETURN:
-            		frame = 6;
-            		break;
-            	}
-            	break;
-            case MOLE:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-			        frame = (int)(enemy->t * enemy->t_rate) % 2;
-			        break;
-			    case ENEMY_ACTION_HIDE:
-			    case ENEMY_ACTION_REVEAL:
-			    	frame = 2;
-			    	break;
-            	case ENEMY_ACTION_PELLET:
-			        frame = 3 + (int)(enemy->t * enemy->t_rate) % 2;
-            		break;
-            	case ENEMY_ACTION_LEFT:
-            	case ENEMY_ACTION_RIGHT:
-            	case ENEMY_ACTION_UP:
-            	case ENEMY_ACTION_DOWN:
-            		frame = 5;
-            		break;
-            	}
-            	break;
-            case VENUS:
-            	switch (current_action(enemy)) {
-            	case ENEMY_ACTION_WAIT:
-            		frame = 0;
-			        break;
-            	case ENEMY_ACTION_SPINY:
-			        frame = 1 + (int)(enemy->t * enemy->t_rate) % 2;
-			        break;
-            	}
-            	break;
-            }
+            int frame = current_enemy_frame(enemy);
 
 		    Rectangle src = {frame * 16, enemy->type * 16, 16, 16};
             switch (enemy->type) {
@@ -562,6 +478,11 @@ static void draw_wave(uint8_t wave) {
     DrawText(text, 90 - width / 2, 8, 10, WHITE);
 }
 
+static void draw_score(uint16_t score) {
+    const char *text = TextFormat("%d", score);
+    DrawText(text, 10, 8, 10, WHITE);
+}
+
 static void draw_time_limit(uint16_t time_limit) {
     const char *text = TextFormat("%d", time_limit);
     DrawText(text, 160, 8, 10, WHITE);
@@ -591,6 +512,7 @@ void draw_gameplay(const GameplayState *s, const GameplayAssets *a) {
     if (target->exists) draw_enemy_hp(target->hp, MAX_ENEMY_HEALTH[target->type], a->status_sprite);
 
     draw_wave(s->wave + 1);
+    draw_score(s->score);
     if (s->countdown > 0) draw_countdown((s->countdown + 9) / 10);
     else draw_time_limit(s->time_limit / 10);
 }

@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define GAME_WIDTH 180
+#define GAME_HEIGHT 180
 #define TICK_RATE 0.1
 #define N_ROWS 3
 #define N_COLS 6
@@ -30,6 +32,15 @@ typedef struct {
 } Tile;
 
 typedef Tile Grid[N_ROWS][N_COLS];
+
+typedef enum {
+    FIRE,
+    WATER,
+    EARTH,
+    AIR,
+} Element;
+
+typedef uint8_t ElementU8;
 
 #define max(a,b) \
 ({ __typeof__ (a) _a = (a); \

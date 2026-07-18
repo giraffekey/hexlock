@@ -6,10 +6,6 @@
 
 HEXLOCK is a fast-paced and tactical action game where you stack abilities by matching symbols in twos and threes.
 
-You play as the witch Morrigan, who seeks the arcane knowledge buried deep within the Wilted Woods.
-
-The guardians of the forest won't go easy on you, however. To defeat them, you must find patterns in the stars and use them to hex your enemies.
-
 ### Controls
 
 Keyboard:
@@ -25,6 +21,16 @@ Gamepad:
  - B / Y / Circle / Triangle - Cast hex
  - Left Bumper / Right Bumper - Select hex
  - Start - Continue
+
+Mouse:
+- Left Click - Cast missile
+- Right Click - Cast hex
+- Scrollwheel - Select hex
+
+Touchscreen:
+- Swipe - Move
+- Tap - Cast hex
+- Double Tap - Cast missile
 
 Gather three astral signs to add a hex to your casting pool.
 

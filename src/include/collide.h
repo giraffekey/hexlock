@@ -11,9 +11,9 @@
 
 void play_damage_sound(DamageStatus status, const Sounds *sounds);
 
-void check_player_glyph_collision(Player *player, Glyph glyphs[], const Sounds *sounds);
+void check_player_glyph_collision(Player *player, Glyph glyphs[], uint16_t *score, const Sounds *sounds);
 
-void on_player_enemy_collision(Player *player, Enemy *enemy, Bullet bullets[], const Sounds *sounds);
+void on_player_enemy_collision(Player *player, Enemy *enemy, bool is_enemy_update, Bullet bullets[], const Sounds *sounds);
 
 void check_player_enemy_collision(Player *player, Enemy enemies[], Bullet bullets[], const Sounds *sounds);
 
