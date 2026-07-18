@@ -44,8 +44,6 @@
 
 #define SCREEN_WIDTH 720
 #define SCREEN_HEIGHT 720
-#define GAME_WIDTH 180
-#define GAME_HEIGHT 180
 
 static const Color CLEAR_COLOR = {30, 29, 57, 255};
 

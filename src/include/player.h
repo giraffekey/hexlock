@@ -1,6 +1,8 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
+#include <raymath.h>
+
 #include "util.h"
 #include "glyph.h"
 
@@ -64,6 +66,7 @@ typedef struct {
     size_t n_hexes;
     size_t selected;
     uint16_t statuses[N_STATUSES];
+    Vector2 tap;
 } Player;
 
 const char* get_hex_name(Hex hex);

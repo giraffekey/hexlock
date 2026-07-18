@@ -27,21 +27,79 @@ static void set_next_player_action(Player *player, ActionU8 action, uint8_t cool
 }
 
 /**
+ * Check if position is in player side bounds
+ * 
+ * @param pos The position
+ * @param offset The offset of the screen
+ * @param scale The scale of the screen
+ */
+static bool is_pos_on_player_side(Vector2 pos, Vector2 offset, float scale) {
+    return pos.x >= offset.x + 22 * scale && pos.x <= offset.x + 86 * scale && pos.y >= offset.y + 80 * scale && pos.y <= offset.y + 144 * scale;
+}
+
+/**
+ * Check if position is in enemy side bounds
+ * 
+ * @param pos The position
+ * @param offset The offset of the screen
+ * @param scale The scale of the screen
+ */
+static bool is_pos_on_enemy_side(Vector2 pos, Vector2 offset, float scale) {
+    return pos.x >= offset.x + 94 * scale && pos.x <= offset.x + 158 * scale && pos.y >= offset.y + 80 * scale && pos.y <= offset.y + 144 * scale;
+}
+
+/**
+ * Check if position is at the top of the screen
+ * 
+ * @param pos The position
+ * @param offset The offset of the screen
+ * @param scale The scale of the screen
+ */
+static bool is_pos_at_top(Vector2 pos, Vector2 offset, float scale) {
+    return pos.x >= offset.x && pos.x <= offset.x + GAME_WIDTH * scale && pos.y >= offset.y && pos.y < offset.y + 80 * scale;
+}
+
+/**
+ * Check if position is at a selectable hex
+ * 
+ * @param pos The position
+ * @param offset The offset of the screen
+ * @param scale The scale of the screen
+ */
+static bool is_pos_at_hex(Vector2 pos, size_t i, Vector2 offset, float scale) {
+    float left_x = (float)(10 + i * 16);
+    float right_x = (float)(26 + i * 16);
+    return pos.x >= offset.x + left_x * scale && pos.x <= offset.x + right_x * scale && pos.y >= offset.y + 150 * scale && pos.y <= offset.y + 166 * scale;
+}
+
+/**
  * Updates player action in response to keyboard, gamepad, mouse, and touch input
  * 
  * @param player The current state of the player
  * @param grid The current state of the arena's tiles
  */
 void handle_input(Player *player, const Grid grid) {
-    bool is_key_pressed, is_gamepad_pressed;
+    float w = (float)GetScreenWidth();
+    float h = (float)GetScreenHeight();
+    float scale = max(min(w / GAME_WIDTH, h / GAME_HEIGHT), 1.0f);
+    Vector2 offset = {(w - GAME_WIDTH * scale) / 2.0f, (h - GAME_HEIGHT * scale) / 2.0f};
+
+    Gesture gesture = GetGestureDetected();
+    if (gesture == GESTURE_TAP || gesture == GESTURE_DOUBLETAP) player->tap = GetTouchPosition(0);
+
+    bool is_key_pressed, is_gamepad_pressed, is_click, is_scroll, is_gesture;
+
+    size_t n_hexes = min(player->n_hexes, MAX_HEXES);
 
     /* Handle input for previous hex selection */
 
     is_key_pressed = IsKeyPressed(KEY_TAB) && IsKeyDown(KEY_LEFT_SHIFT);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_2);
-    if (is_key_pressed || is_gamepad_pressed) {
-        if (player->n_hexes > 0) {
-            player->selected = (player->selected + player->n_hexes - 1) % player->n_hexes;
+    is_scroll = GetMouseWheelMove() > 0.0f;
+
+    if (is_key_pressed || is_gamepad_pressed || is_scroll) {
+        if (n_hexes > 0) {
+            player->selected = (player->selected + n_hexes - 1) % n_hexes;
         }
     }
 
@@ -49,9 +107,22 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_C) || IsKeyPressed(KEY_TAB) && !IsKeyDown(KEY_LEFT_SHIFT);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_2);
-    if (is_key_pressed || is_gamepad_pressed) {
-        if (player->n_hexes > 0) {
-            player->selected = (player->selected + 1) % player->n_hexes;
+    is_scroll = GetMouseWheelMove() < 0.0f;
+
+    if (is_key_pressed || is_gamepad_pressed || is_scroll) {
+        if (n_hexes > 0) {
+            player->selected = (player->selected + 1) % n_hexes;
+        }
+    }
+
+    /* Handle input for clicking on hex */
+
+    for (size_t i = 0; i < n_hexes; ++i) {
+        is_click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && is_pos_at_hex(GetMousePosition(), i, offset, scale);
+        is_gesture = gesture == GESTURE_TAP && is_pos_at_hex(player->tap, i, offset, scale);
+        if (is_click || is_gesture) {
+            player->selected = i;
+            break;
         }
     }
 
@@ -62,7 +133,9 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_A);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_LEFT);
-    if (is_key_pressed || is_gamepad_pressed) {
+    is_gesture = gesture == GESTURE_SWIPE_LEFT && is_pos_on_player_side(player->tap, offset, scale);
+
+    if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x - 1 - (player->action == ACTION_LEFT), player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
@@ -82,7 +155,9 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_RIGHT);
-    if (is_key_pressed || is_gamepad_pressed) {
+    is_gesture = gesture == GESTURE_SWIPE_RIGHT && is_pos_on_player_side(player->tap, offset, scale);
+
+    if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x + 1 + (player->action == ACTION_RIGHT), player->pos.y};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
@@ -102,7 +177,9 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_UP);
-    if (is_key_pressed || is_gamepad_pressed) {
+    is_gesture = gesture == GESTURE_SWIPE_UP && is_pos_on_player_side(player->tap, offset, scale);
+
+    if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x, player->pos.y - 1 - (player->action == ACTION_UP)};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
@@ -122,7 +199,9 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_S);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_FACE_DOWN);
-    if (is_key_pressed || is_gamepad_pressed) {
+    is_gesture = gesture == GESTURE_SWIPE_DOWN && is_pos_on_player_side(player->tap, offset, scale);
+
+    if (is_key_pressed || is_gamepad_pressed || is_gesture) {
         if (player->cooldown > 0) {
             Position next_pos = {player->pos.x, player->pos.y + 1 + (player->action == ACTION_DOWN)};
             if (is_in_player_bounds(grid, next_pos) && !is_wall(grid, next_pos)) {
@@ -142,7 +221,10 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_Z) || IsKeyPressed(KEY_SPACE);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT);
-    if (is_key_pressed || is_gamepad_pressed) {
+    is_click = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && is_pos_on_enemy_side(GetMousePosition(), offset, scale);
+    is_gesture = gesture == GESTURE_TAP && !IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && is_pos_on_enemy_side(player->tap, offset, scale);
+
+    if (is_key_pressed || is_gamepad_pressed || is_click || is_gesture) {
         if (player->missile_delay == 0) {
             if (player->cooldown > 0) {
                 set_next_player_action(player, ACTION_MISSILE, player->statuses[STATUS_CAST_FAST] > 1 ? 1 : 2);
@@ -159,7 +241,10 @@ void handle_input(Player *player, const Grid grid) {
 
     is_key_pressed = IsKeyPressed(KEY_X) || IsKeyPressed(KEY_F);
     is_gamepad_pressed = IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_RIGHT) || IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_UP);
-    if (is_key_pressed || is_gamepad_pressed) {
+    is_click = IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) && is_pos_on_enemy_side(GetMousePosition(), offset, scale);
+    is_gesture = gesture == GESTURE_DOUBLETAP && is_pos_at_top(player->tap, offset, scale);
+
+    if (is_key_pressed || is_gamepad_pressed || is_click || is_gesture) {
         if (player->hexes[0].valid) {
             if (player->cooldown > 0) {
                 if (player->action != ACTION_HEX) {

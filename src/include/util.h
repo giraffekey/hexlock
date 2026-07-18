@@ -5,6 +5,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#define GAME_WIDTH 180
+#define GAME_HEIGHT 180
 #define TICK_RATE 0.1
 #define N_ROWS 3
 #define N_COLS 6
