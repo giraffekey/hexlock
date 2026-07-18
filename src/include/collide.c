@@ -17,7 +17,7 @@ void play_damage_sound(DamageStatus status, const Sounds *sounds) {
     }
 }
 
-void check_player_glyph_collision(Player *player, Glyph glyphs[], const Sounds *sounds) {
+void check_player_glyph_collision(Player *player, Glyph glyphs[], uint16_t *score, const Sounds *sounds) {
     for (size_t i = 0; i < MAX_GLYPHS; ++i) {
         Glyph *glyph = &glyphs[i];
         if (glyph->exists && is_pos_eq(player->pos, glyph->pos)) {
@@ -27,6 +27,7 @@ void check_player_glyph_collision(Player *player, Glyph glyphs[], const Sounds *
             if (player->n_signs == MAX_SIGNS) {
                 Hex hex = find_hex(player->signs);
                 if (hex.valid) {
+                    *score += 10;
                     add_hex(player, hex);
                     PlaySound(sounds->success);
                 } else {

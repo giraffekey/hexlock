@@ -148,7 +148,7 @@ static void update_time(GameplayState *s, float dt) {
 
 static void update_tick(GameplayState *s, const Sounds *sounds, Screen *next_screen) {
     update_glyphs(s->glyphs);
-    update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets, sounds);
+    update_player(&s->player, s->grid, s->glyphs, s->enemies, s->bullets, &s->score, sounds);
     update_enemies(s->enemies, s->grid, &s->player, s->bullets, &s->score, sounds);
     update_bullets(s->bullets, s->grid, &s->player, s->enemies, sounds);
     update_glyph_spawner(&s->glyph_spawner, s->glyphs, s->wave, s->grid, &s->player);

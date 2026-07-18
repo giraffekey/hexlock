@@ -27,7 +27,7 @@ void handle_input(Player *player, const Grid grid);
  * @param bullets The current state of the arena's bullets
  * @param sounds The available sound effects to be played
  */
-void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], Bullet bullets[], const Sounds *sounds);
+void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], Bullet bullets[], uint16_t *score, const Sounds *sounds);
 
 /**
  * Updates the ID of the enemy whose health is currently being displayed

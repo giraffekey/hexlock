@@ -289,7 +289,7 @@ void handle_input(Player *player, const Grid grid) {
  * @param bullets The current state of the arena's bullets
  * @param sounds The available sound effects to be played
  */
-static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
+static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet bullets[], uint16_t *score, const Sounds *sounds) {
     switch (player->action) {
     case ACTION_LEFT:
         player->pos.x--;
@@ -306,7 +306,7 @@ static void move_player(Player *player, Glyph glyphs[], Enemy enemies[], Bullet 
     }
 
     // Check for collisions after movement
-    check_player_glyph_collision(player, glyphs, sounds);
+    check_player_glyph_collision(player, glyphs, score, sounds);
     check_player_enemy_collision(player, enemies, bullets, sounds);
     check_player_bullet_collision(player, bullets, sounds);
 }
@@ -793,7 +793,7 @@ static void cast_hex(Player *player, Grid grid, Enemy enemies[], Bullet bullets[
  * @param bullets The current state of the arena's bullets
  * @param sounds The available sound effects to be played
  */
-void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], Bullet bullets[], const Sounds *sounds) {
+void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], Bullet bullets[], uint16_t *score, const Sounds *sounds) {
     if (player->cooldown > 0) player->cooldown--;
 
     if (player->missile_delay > 0) player->missile_delay--;
@@ -808,7 +808,7 @@ void update_player(Player *player, Grid grid, Glyph glyphs[], Enemy enemies[], B
         case ACTION_RIGHT:
         case ACTION_UP:
         case ACTION_DOWN:
-            move_player(player, glyphs, enemies, bullets, sounds);
+            move_player(player, glyphs, enemies, bullets, score, sounds);
             break;
         case ACTION_MISSILE:
             spawn_bullet(bullets, player->pos, BULLET_MISSILE, true);
