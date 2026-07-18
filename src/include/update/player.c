@@ -5,6 +5,7 @@
  * 
  * @param pos The current position
  * @param action The current action
+ * @return The next position
  */
 static Position get_next_position(Position pos, ActionU8 action) {
     switch (action) {
@@ -49,6 +50,7 @@ static void set_next_player_action(Player *player, ActionU8 action, uint8_t cool
  * @param pos The position
  * @param offset The offset of the screen
  * @param scale The scale of the screen
+ * @return Whether position is in specified bounds
  */
 static bool is_pos_on_player_side(Vector2 pos, Vector2 offset, float scale) {
     return pos.x >= offset.x + 22 * scale && pos.x <= offset.x + 86 * scale && pos.y >= offset.y + 80 * scale && pos.y <= offset.y + 144 * scale;
@@ -60,6 +62,7 @@ static bool is_pos_on_player_side(Vector2 pos, Vector2 offset, float scale) {
  * @param pos The position
  * @param offset The offset of the screen
  * @param scale The scale of the screen
+ * @return Whether position is in specified bounds
  */
 static bool is_pos_on_enemy_side(Vector2 pos, Vector2 offset, float scale) {
     return pos.x >= offset.x + 94 * scale && pos.x <= offset.x + 158 * scale && pos.y >= offset.y + 80 * scale && pos.y <= offset.y + 144 * scale;
@@ -71,6 +74,7 @@ static bool is_pos_on_enemy_side(Vector2 pos, Vector2 offset, float scale) {
  * @param pos The position
  * @param offset The offset of the screen
  * @param scale The scale of the screen
+ * @return Whether position is in specified bounds
  */
 static bool is_pos_at_top(Vector2 pos, Vector2 offset, float scale) {
     return pos.x >= offset.x && pos.x <= offset.x + GAME_WIDTH * scale && pos.y >= offset.y && pos.y < offset.y + 80 * scale;
@@ -82,6 +86,7 @@ static bool is_pos_at_top(Vector2 pos, Vector2 offset, float scale) {
  * @param pos The position
  * @param offset The offset of the screen
  * @param scale The scale of the screen
+ * @return Whether position is in specified bounds
  */
 static bool is_pos_at_hex(Vector2 pos, size_t i, Vector2 offset, float scale) {
     float left_x = (float)(10 + i * 16);
@@ -338,14 +343,12 @@ static void push_enemy(Position from, const Grid grid, Enemy enemies[]) {
         if (enemy->exists && is_pos_eq(enemy->pos, from)) {
             if (enemy->pos.x == N_COLS - 1) {
                 // Kill the enemy if they are in the last column
-                enemy->exists = false;
-                // TODO: Play death animation
+                kill_enemy(enemy);
             } else {
                 Position behind = {enemy->pos.x + 1, enemy->pos.y};
                 if (is_used[behind.y * 6 + behind.x]) {
                     // Kill the enemy if no space behind them exists
-                    enemy->exists = false;
-                    // TODO: Play death animation
+                    kill_enemy(enemy);
                 } else {
                     // Otherwise, move them to the space behind
                     enemy->pos = behind;
